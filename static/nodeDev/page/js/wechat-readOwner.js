@@ -156,18 +156,68 @@ var vueRadioDomino = new Vue({
         this.canUpdate = true;
       }
       if (this.canUpdate) {
-        syncRadioStatusWithReadId(getUrlParam('id'))
+        if (vueRadioDomino.toggle) {
+          $('#iosDialog1').css("display", "block")
+        } else {
+          syncRadioStatusWithReadId(getUrlParam('id'), '')
+        }
       }
     }
   }
 })
 
-function syncRadioStatusWithReadId(id) {
+var addressInfo = new Vue({
+  el: '#addressInfo',
+  data: {
+    bookAddressInfo: '',
+    seen: false,
+  },
+})
+
+function showBookAddress(res) {
+  addressInfo.bookAddressInfo = res.provinceName + ' ' + res.cityName + ' ' + res.countryName
+}
+
+function shareBookCancel() {
+  $('#iosDialog1').css("display", "none")
+  vueRadioDomino.toggle = 0
+}
+
+function editBookAddress() {
+  wx.openAddress({
+    success: function(res) {
+      // 用户成功拉出地址 
+      // alert(JSON.stringify(res));
+      // $('#addressContent').html('收货人姓名:' + res.userName)
+      if (res.errMsg == 'openAddress:ok') {
+        syncRadioStatusWithReadId(getUrlParam('id'), JSON.stringify(res))
+          // console.log(res)
+          // showCustomerAddress(res);
+          // editContent(JSON.stringify(res), 'orderByCustomer', 'customerExpressInfo')
+      }
+    },
+    cancel: function() {
+      // 用户取消拉出地址
+      console.log('cancel')
+    }
+  });
+}
+
+function syncRadioStatusWithReadId(id, address) {
+  var editInfo = {
+    readId: id,
+    dominoStatus: vueRadioDomino.toggle,
+    address: address
+  }
   $.ajax({
-    url: "../ajax/syncRadioStatusWithReadIdAjax?readId=" + id + "&dominoStatus=" + vueRadioDomino.toggle,
-    type: "get",
+    url: "../ajax/syncRadioStatusWithReadIdAjax",
+    type: "post",
     contentType: "application/json",
+    data: JSON.stringify(editInfo),
+    dateType: "json",
     success: function(result) {
+      console.log(result)
+      alert(result)
       var rev = JSON.parse(result);
     },
     error: function(xhr, status) {

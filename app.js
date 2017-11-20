@@ -636,10 +636,10 @@ function getReadInfoWithIdAjax(req, res) {
 
 function syncRadioStatusWithReadIdAjax(req, res) {
 
-	checkReadAuthorize(req, res, req.query.readId, 'syncRadioStatusWithReadIdAjax', succ, fail)
+	checkReadAuthorize(req, res, req.body.readId, 'syncRadioStatusWithReadIdAjax', succ, fail)
 
 	function succ(rows) {
-		poolConfig.query("update tbl_reads set openDomino=? where id=?", [req.query.dominoStatus, req.query.readId], function(err, rows, fields) {
+		poolConfig.query("update tbl_reads set openDomino=?,bookAddress=? where id=?", [req.body.dominoStatus, req.body.address, req.body.readId], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
 			} else {
@@ -933,7 +933,7 @@ app.post(CONFIG.DIR_FIRST + '/ajax/editNoteAjax', jsonParser, editNoteAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/actLogAjax', jsonParser, actLogAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/listReadAjax', listReadAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax);
-app.get(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', syncRadioStatusWithReadIdAjax);
+app.post(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', jsonParser, syncRadioStatusWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/createUnifiedOrderAjax', createUnifiedOrderAjax);
 
 // console.log(sign(poolConfig, 'http://example.com'));
