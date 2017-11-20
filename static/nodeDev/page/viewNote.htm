@@ -1,0 +1,75 @@
+<script src="signWechat.js"></script>
+<head>
+	<meta charset="utf-8">
+	<title>笔记</title>
+	<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
+	<META HTTP-EQUIV="pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="expires" CONTENT="0">
+	<meta name="viewport"
+	content="width=device-width, initial-scale=1, user-scalable=0">
+	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+</head>
+<body ontouchstart="">
+	<div class="container" id="container">
+		<div class="weui-tab">
+			<div class="weui-tab__panel">
+				<div class="weui-cells">
+					{{bookViewHtml}}
+				</div>
+				<div class="weui-cells__title">笔记</div>
+				<div class="weui-cells">
+					<div class="weui-cell">
+						<div class="weui-cell__bd">
+							<span id="spanNote">{{note}}</span>
+						</div>
+					</div>
+				</div>
+				<div class="weui-cells__title">图片</div>
+				<div class="weui-cells">
+					<div class="weui-cell">
+						<article class="weui-article">
+							<div id="previewImage">
+								{{imgHtml}}
+							</div>
+						</article>
+					</div>
+				</div>
+			</div>
+			<div class="weui-tabbar">
+				{{bottom}}
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+<script>
+	var imgUrl = '{{imgUrl}}';
+	wx.config({
+		debug : sign.debug,
+		appId :sign.appId
+	,
+		timestamp :sign.timestamp
+	,
+		nonceStr :sign.nonceStr
+	,
+		signature :sign.signature
+	,
+		jsApiList : [ 'checkJsApi', 'onMenuShareTimeline',
+				'onMenuShareAppMessage', 'onMenuShareQQ', 'onMenuShareWeibo',
+				'onMenuShareQZone', 'hideMenuItems', 'showMenuItems',
+				'hideAllNonBaseMenuItem', 'showAllNonBaseMenuItem',
+				'translateVoice', 'startRecord', 'stopRecord',
+				'onVoiceRecordEnd', 'playVoice', 'onVoicePlayEnd',
+				'pauseVoice', 'stopVoice', 'uploadVoice', 'downloadVoice',
+				'chooseImage', 'previewImage', 'uploadImage', 'downloadImage',
+				'getNetworkType', 'openLocation', 'getLocation',
+				'hideOptionMenu', 'showOptionMenu', 'closeWindow',
+				'scanQRCode', 'chooseWXPay', 'openProductSpecificView',
+				'addCard', 'chooseCard', 'openCard' ]
+	});
+</script>
+<script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
+<script src="js/wechat-viewNote.js"></script>
+<script src="js/private-util.js"></script>
+</html>
