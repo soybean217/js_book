@@ -175,7 +175,9 @@ var addressInfo = new Vue({
 })
 
 function showBookAddress(res) {
-  addressInfo.bookAddressInfo = res.provinceName + ' ' + res.cityName + ' ' + res.countryName
+  addressInfo.bookAddressInfo = '所在地：' +
+    res.provinceName + ' ' + res.cityName + ' ' + res.countryName
+  addressInfo.seen = true
 }
 
 function shareBookCancel() {
@@ -190,7 +192,7 @@ function editBookAddress() {
       // alert(JSON.stringify(res));
       // $('#addressContent').html('收货人姓名:' + res.userName)
       if (res.errMsg == 'openAddress:ok') {
-        syncRadioStatusWithReadId(getUrlParam('id'), JSON.stringify(res))
+        syncRadioStatusWithReadId(getUrlParam('id'), res)
           // console.log(res)
           // showCustomerAddress(res);
           // editContent(JSON.stringify(res), 'orderByCustomer', 'customerExpressInfo')
@@ -207,7 +209,7 @@ function syncRadioStatusWithReadId(id, address) {
   var editInfo = {
     readId: id,
     dominoStatus: vueRadioDomino.toggle,
-    address: address
+    address: JSON.stringify(address)
   }
   $.ajax({
     url: "../ajax/syncRadioStatusWithReadIdAjax",
@@ -216,9 +218,13 @@ function syncRadioStatusWithReadId(id, address) {
     data: JSON.stringify(editInfo),
     dateType: "json",
     success: function(result) {
-      console.log(result)
-      alert(result)
-      var rev = JSON.parse(result);
+      if (vueRadioDomino.toggle) {
+        showBookAddress(address)
+      } else {
+        addressInfo.seen = false
+      }
+      $('#iosDialog1').css("display", "none")
+        // var rev = JSON.parse(result);
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));
@@ -236,6 +242,9 @@ function getReadInfoWithId(id) {
       if (readInfo.length > 0) {
         vueRadioDomino.toggle = readInfo[0].openDomino
         vueRadioDomino.seen = true
+        if (readInfo[0].openDomino) {
+          showBookAddress(JSON.parse(readInfo[0].bookAddress))
+        }
       }
     },
     error: function(xhr, status) {

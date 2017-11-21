@@ -15,7 +15,16 @@
 		<div class="weui-tab">
 			<div class="weui-tab__panel">
 				<div class="weui-cells" id="book">{{book}}
-					
+					<div id="openDominoState" v-if='seen' >
+						<div class="weui-cells__title" id='readOwnerInfo' v-html="readOwnerInfo">
+							
+						</div>
+						<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
+						</div>
+						<div class="weui-cells__title">
+							<a href="javascript:;" class="weui-btn weui-btn_primary">申请接龙读这本实体书</a>
+						</div>
+					</div>
 				</div>
 				<div class="weui-cells" id="notes">{{scriptPicData}}{{notes}}
 				</div>

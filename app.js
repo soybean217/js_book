@@ -621,7 +621,18 @@ function checkReadAuthorize(req, res, readId, tag, success, fail) {
 
 function getReadInfoWithIdAjax(req, res) {
 
-	checkReadAuthorize(req, res, req.query.readId, 'getReadInfoWithIdAjax', succ, fail)
+	poolConfig.query("SELECT * FROM  `tbl_reads`,tbl_wechat_users WHERE tbl_reads.openId=tbl_wechat_users.openId  and tbl_reads.id = ?", [req.query.readId], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+		} else {
+			if (rows.length > 0) {
+				return succ(rows)
+			} else {
+				logger.warn(tag + ' book is not exist . ' + req.url)
+				return fail()
+			}
+		}
+	});
 
 	function succ(rows) {
 		res.send(JSON.stringify(rows))
@@ -761,6 +772,10 @@ function editBookAjax(req, res) {
 }
 
 function signOut(req, res) {
+	res.set({
+		"Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+		"Expires": "-1",
+	})
 	var result = 'var sign = ' + JSON.stringify(sign(globalInfo.jsapiTicket.value, req.header('Referer')));
 	res.send(result);
 }

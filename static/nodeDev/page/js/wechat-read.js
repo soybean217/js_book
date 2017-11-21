@@ -19,66 +19,7 @@ wx.ready(function() {
 		serverId: [],
 	};
 
-	var chooseImageNote = $("#chooseImageNote")
-	if (chooseImageNote.length > 0) {
-		document.querySelector('#chooseImageNote').onclick = function() {
-			wx.chooseImage({
-				count: 9, // 默认9
-				sizeType: ['compressed'], // 可以指定是原图还是压缩图，默认二者都有
-				sourceType: ['album', 'camera'], // 可以指定来源是相册还是相机，默认二者都有
-				success: function(res) {
-					images.localId = res.localIds;
-					var i = 0,
-						length = images.localId.length;
-					images.serverId = [];
-
-					function upload() {
-						wx.uploadImage({
-							localId: images.localId[i],
-							success: function(res) {
-								i++;
-								//alert('已上传：' + i + '/' + length);
-								images.serverId.push(res.serverId);
-								if (i < length) {
-									upload();
-								} else {
-									$.ajax({
-										url: "../ajax/picUploadAjax?act=note&readId=" + getUrlParam('id'),
-										type: "post",
-										contentType: "application/json",
-										data: JSON.stringify(images),
-										timeout: 120000,
-										success: function(result) {
-											$('#loadingToast').css("display", "none")
-											var rev = JSON.parse(result);
-											if (rev.status == 'ok' && rev.location) {
-												location = rev.location
-											} else {
-												console.log(result)
-												alert(result)
-											}
-										},
-										error: function(xhr, status) {
-											alert(JSON.stringify(status));
-											alert(JSON.stringify(xhr));
-											alert('error,请关闭重新进入');
-											$('#loadingToast').css("display", "none")
-										},
-									});
-								}
-							},
-							fail: function(res) {
-								alert(JSON.stringify(res));
-								$('#loadingToast').css("display", "none")
-							}
-						});
-					}
-					$('#loadingToast').css("display", "block")
-					upload();
-				}
-			});
-		};
-	}
+	getReadInfoWithId(getUrlParam('id'));
 
 	$('.weui-panel__ft').on('click', function(event) {
 		if (pics[$(this).attr('id')]) {
@@ -137,23 +78,37 @@ wx.ready(function() {
 
 });
 
+var openDominoState = new Vue({
+	el: '#openDominoState',
+	data: {
+		bookAddressInfo: '',
+		readOwnerInfo: '',
+		seen: false,
+	},
+})
 
-// function showPicsOfNote() {
-//   var oParent = $(this).parent();
-//   console.log('in1')
-//   console.log(oParent.attr('id'))
-//   if (pics[oParent.attr('id')]) {
-//     console.log('in2')
-//     var result = [];
-//     pics[oParent.attr('id')].split(',').forEach(function(row) {
-//       result.push(picDomain + row)
-//     })
-//     console.log(result)
-//     if (result.length > 0) {
-//       wx.previewImage({
-//         current: result[0],
-//         urls: result
-//       });
-//     }
-//   }
-// }
+function showBookAddress(res) {
+	openDominoState.bookAddressInfo = '实体书所在地：' +
+		res.provinceName + ' ' + res.cityName + ' ' + res.countryName
+	openDominoState.seen = true
+}
+
+function getReadInfoWithId(id) {
+	$.ajax({
+		url: "../ajax/getReadInfoWithIdAjax?readId=" + id,
+		type: "get",
+		contentType: "application/json",
+		success: function(result) {
+			readInfo = JSON.parse(result);
+			if (readInfo.length > 0) {
+				if (readInfo[0].openDomino) {
+					openDominoState.readOwnerInfo = readInfo[0].nickName + ' 看完将分享这本实体书'
+					showBookAddress(JSON.parse(readInfo[0].bookAddress))
+				}
+			}
+		},
+		error: function(xhr, status) {
+			alert(JSON.stringify(status));
+		},
+	});
+}

@@ -73,6 +73,7 @@ function closeShareTip() {
 }
 
 wx.error(function(res) {
+	console.log('wx.error')
 	if (res.errMsg == 'config:invalid signature') {
 		reRegisterWxTag = getCookie('reRegisterWxTag')
 		if (reRegisterWxTag != "1") {
