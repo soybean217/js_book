@@ -101,14 +101,17 @@ app.use(function(req, res, next) {
 				isNext = false
 				oAuthBaseProcess(req.query.code)
 			} else {
-				if (!req.session.wechatBase) {
+				if (req.url.indexOf('apply') != -1 && !req.session.wechatUserInfo) {
+					toWechatOauth('snsapi_userinfo')
+				} else if (!req.session.wechatBase) {
 					// only support get method
 					// var scope = 'snsapi_userinfo';
-					var scope = 'snsapi_base';
-					var urlEncodedUrl = encodeURIComponent(req.protocol + '://' + req.hostname + req.url)
-					var oAuthUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + CONFIG.WECHAT.APPID + '&redirect_uri=' + urlEncodedUrl + '&response_type=code&scope=' + scope + '&state=123#wechat_redirect'
-					isNext = false
-					return res.send('<script>location="' + oAuthUrl + '"</script>')
+					toWechatOauth('snsapi_base')
+						// var scope = 'snsapi_base';
+						// var urlEncodedUrl = encodeURIComponent(req.protocol + '://' + req.hostname + req.url)
+						// var oAuthUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + CONFIG.WECHAT.APPID + '&redirect_uri=' + urlEncodedUrl + '&response_type=code&scope=' + scope + '&state=123#wechat_redirect'
+						// isNext = false
+						// return res.send('<script>location="' + oAuthUrl + '"</script>')
 				} else {
 					if (!req.query.f) {
 						isNext = false
@@ -129,6 +132,13 @@ app.use(function(req, res, next) {
 	}
 	if (isNext) {
 		next();
+	}
+
+	function toWechatOauth(scope) {
+		var urlEncodedUrl = encodeURIComponent(req.protocol + '://' + req.hostname + req.url)
+		var oAuthUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + CONFIG.WECHAT.APPID + '&redirect_uri=' + urlEncodedUrl + '&response_type=code&scope=' + scope + '&state=123#wechat_redirect'
+		isNext = false
+		return res.send('<script>location="' + oAuthUrl + '"</script>')
 	}
 
 	function checkWechatHeader() {
@@ -219,6 +229,7 @@ app.use(function(req, res, next) {
 			});
 			response.on('end', function() {
 				var rev = JSON.parse(body);
+				logger.debug('baseinfo', rev);
 				if (rev.subscribe_time) {
 					req.session.userInfoFromDb = {
 						subscribeTime: rev.subscribe_time,
@@ -268,9 +279,8 @@ app.use(function(req, res, next) {
 				body += d;
 			});
 			response.on('end', function() {
-				logger.debug(body);
 				var rev = JSON.parse(body);
-				logger.debug(rev);
+				logger.debug('userinfo', rev);
 				if (rev.openid) {
 					req.session.wechatUserInfo = rev
 					redirectAfterOAuthSuccess();
@@ -645,6 +655,92 @@ function getReadInfoWithIdAjax(req, res) {
 
 }
 
+function getApplyDominoInfoWithReadIdAjax(req, res) {
+	if (req.session.wechatUserInfo) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatUserInfo.openid, req.query.readId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				return succ(rows)
+			}
+		});
+	} else {
+		return fail()
+	}
+
+	function succ(rows) {
+		res.send(JSON.stringify(rows))
+		res.end()
+	}
+
+	function fail() {
+		return res.send('{"status":"error"}')
+	}
+
+}
+
+function insertApplyDominos(req, res, dominoMethod, address) {
+	var id = (new Date()).getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random()
+	poolConfig.query("insert tbl_apply_dominos (id,openId,readId,dominoMethod,expressAddress) values(?,?,?,?,?) ", [id, req.session.wechatUserInfo.openid, req.body.readId, dominoMethod, address], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+		} else {
+			if (!(rows.constructor.name == 'OkPacket')) {
+				logger.error('error insertApplyDominos sql:')
+				logger.error(rows)
+				res.send('{"status":"error"}')
+			} else {
+				res.send('{"status":"ok"}')
+				res.end()
+			}
+		}
+	});
+}
+
+function syncDominoMethodWithReadIdAjax(req, res) {
+	if (req.session.wechatUserInfo) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatUserInfo.openid, req.body.readId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				if (rows.length > 0) {
+					updateApplyDominos()
+				} else {
+					insertApplyDominos(req, res, req.body.dominoMethod, req.body.address)
+				}
+			}
+		});
+	} else {
+		return fail()
+	}
+
+	function updateApplyDominos() {
+		poolConfig.query("update tbl_apply_dominos set expressAddress=?,dominoMethod=?  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.body.address, req.body.dominoMethod, req.session.wechatUserInfo.openid, req.body.readId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				if (!(rows.constructor.name == 'OkPacket')) {
+					logger.error('error updateApplyDominos update sql:')
+					logger.error(rows)
+					fail()
+				} else {
+					succ()
+				}
+			}
+		});
+	}
+
+	function succ(rows) {
+		res.send('{"status":"ok"}')
+		res.end()
+	}
+
+	function fail() {
+		return res.send('{"status":"error"}')
+	}
+
+}
+
 function syncRadioStatusWithReadIdAjax(req, res) {
 
 	checkReadAuthorize(req, res, req.body.readId, 'syncRadioStatusWithReadIdAjax', succ, fail)
@@ -948,7 +1044,9 @@ app.post(CONFIG.DIR_FIRST + '/ajax/editNoteAjax', jsonParser, editNoteAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/actLogAjax', jsonParser, actLogAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/listReadAjax', listReadAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/getApplyDominoInfoWithReadIdAjax', getApplyDominoInfoWithReadIdAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', jsonParser, syncRadioStatusWithReadIdAjax);
+app.post(CONFIG.DIR_FIRST + '/ajax/syncDominoMethodWithReadIdAjax', jsonParser, syncDominoMethodWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/createUnifiedOrderAjax', createUnifiedOrderAjax);
 
 // console.log(sign(poolConfig, 'http://example.com'));

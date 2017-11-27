@@ -87,6 +87,10 @@ var openDominoState = new Vue({
 	},
 })
 
+function applyDomino() {
+	location = 'applyDomino.htm?readid=' + getUrlParam('id')
+}
+
 function showBookAddress(res) {
 	openDominoState.bookAddressInfo = '实体书所在地：' +
 		res.provinceName + ' ' + res.cityName + ' ' + res.countryName
