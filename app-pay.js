@@ -27,6 +27,13 @@ var poolConfig = mysql.createPool({
 	database: CONFIG.DBPRODUCT.DATABASE,
 	port: CONFIG.DBPRODUCT.PORT
 });
+var poolLog = mysql.createPool({
+	host: CONFIG.DBLOG.HOST,
+	user: CONFIG.DBLOG.USER,
+	password: CONFIG.DBLOG.PASSWORD,
+	database: CONFIG.DBLOG.DATABASE,
+	port: CONFIG.DBLOG.PORT
+});
 
 var selectSQL = "show variables like 'wait_timeout'";
 
@@ -47,8 +54,12 @@ poolConfig.getConnection(function(err, conn) {
 // tokenWechat.freshToken(poolConfig);
 
 function notify(req, res) {
-	logger.debug(req.body)
-	if (req.body.xml.total_fee == CONFIG.MEMBER_FEE) {
+	res.send('<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>');
+	res.end()
+	logger.debug('notify-req.body', req.body)
+	if (req.body.xml.out_trade_no.length == 19) {
+		processOrder()
+	} else if (req.body.xml.total_fee == CONFIG.MEMBER_FEE) {
 		poolConfig.query("SELECT ifnull(memberExpireTime,0) as memberExpireTime FROM tbl_wechat_users where openId=?", [req.body.xml.openid], function(err, rows, fields) {
 			var ctime = new Date().getTime() / 1000
 			if (err) {
@@ -78,11 +89,56 @@ function notify(req, res) {
 			}
 		});
 	}
-	// parser.parseString(req.body, function(err, result) {
-	// 	logger.debug(err)
-	// 	logger.debug(result)
-	// });
-	res.send('<xml><return_code><![CDATA[SUCCESS]]></return_code><return_msg><![CDATA[OK]]></return_msg></xml>');
+	logNotify()
+
+	function logNotify() {
+		var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+		poolLog.query("insert log_async_generals (id,logId,para01,para02) values(?,?,?,?)", [new Date().getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random(),
+			201, JSON.stringify(req.body.xml), ip
+		], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				if (!(rows.constructor.name == 'OkPacket')) {
+					logger.error('error actLogAjax sql:')
+					logger.error(rows)
+				}
+			}
+		});
+	}
+
+	function processOrder() {
+		poolLog.query("SELECT * FROM log_sync_generals where id=?", [req.body.xml.out_trade_no], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				if (rows[0].para01 == 'expressFee') {
+					processExpressFee(rows[0])
+					updateOrderLog()
+				}
+			}
+		});
+	}
+
+	function updateOrderLog() {
+		poolLog.query("update log_sync_generals set para04=? where id=?", [req.body.xml.transaction_id, req.body.xml.out_trade_no], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+
+			}
+		});
+	}
+
+	function processExpressFee(orderLog) {
+		poolConfig.query("update tbl_apply_dominos set expressFee=?,expressFeePayStatus='payed',transactionId=? where readid=? and openId=?", [req.body.xml.total_fee / 100, req.body.xml.transaction_id, orderLog.para02, req.body.xml.openid], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+
+			}
+		});
+	}
 }
 
 function index(req, res) {

@@ -33,7 +33,7 @@ var poolConfig = mysql.createPool({
 	database: CONFIG.DBPRODUCT.DATABASE,
 	port: CONFIG.DBPRODUCT.PORT
 });
-var poolConfigLog = mysql.createPool({
+var poolLog = mysql.createPool({
 	host: CONFIG.DBLOG.HOST,
 	user: CONFIG.DBLOG.USER,
 	password: CONFIG.DBLOG.PASSWORD,
@@ -553,8 +553,9 @@ function editNoteAjax(req, res) {
 function actLogAjax(req, res) {
 	res.send('{"msg":"ok"}')
 	res.end()
-	poolConfigLog.query("insert log_async_generals (id,logId,para01,para02,para03,para04) values(?,?,?,?,?,?)", [new Date().getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random(),
-		1, req.session.wechatBase.openid, req.body.act, req.body.result, req.body.location
+	var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+	poolLog.query("insert log_async_generals (id,logId,para01,para02,para03,para04,para05) values(?,?,?,?,?,?,?)", [new Date().getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random(),
+		1, req.session.wechatBase.openid, req.body.act, req.body.result, req.body.location, ip
 	], function(err, rows, fields) {
 		if (err) {
 			logger.error(err);
@@ -803,34 +804,70 @@ function createUnifiedOrderAjax(req, res) {
 	});
 
 	var ctime = new Date()
-
-	wxpay.createUnifiedOrder({
-		body: '会员费',
-		out_trade_no: '' + ctime.getFullYear() + '-' + (ctime.getMonth() + 1) + '-' + ctime.getDate() + '-' + ctime.getHours() + '-' + ctime.getMinutes() + '-' + ctime.getSeconds() + '-' + Math.random().toString().substr(2, 10),
-		total_fee: CONFIG.MEMBER_FEE,
-		spbill_create_ip: '127.0.0.1',
-		notify_url: 'http://' + CONFIG.DOMAIN + '/' + CONFIG.PAY_DIR_FIRST + '/notify',
-		trade_type: 'JSAPI',
-		product_id: '1',
-		openid: req.session.wechatBase.openid,
-	}, function(err, result) {
-		logger.debug(err);
-		logger.debug(result);
-		var reqparam = {
-			appId: CONFIG.WECHAT.APPID,
-			timeStamp: parseInt(new Date().getTime() / 1000) + "",
-			nonceStr: result.nonce_str,
-			package: "prepay_id=" + result.prepay_id,
-			signType: "MD5",
-		};
-		logger.debug(reqparam)
-		reqparam.paySign = wxpay.sign(reqparam);
-		reqparam.timestamp = reqparam.timeStamp;
-		delete reqparam.timeStamp
-		logger.debug(reqparam)
-		res.send(JSON.stringify(reqparam))
-		res.end()
+	var out_trade_no = ctime.getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random();
+	var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+	poolLog.query("insert log_sync_generals (id,logId,para01,para02,para03) values(?,?,?,?,?)", [out_trade_no,
+		101, req.query.type, req.query.id, ip
+	], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+		} else {
+			if (!(rows.constructor.name == 'OkPacket')) {
+				logger.error('error actLogAjax sql:')
+				logger.error(rows)
+			} else {
+				createWxPayOrder()
+			}
+		}
 	});
+
+
+	function createWxPayOrder() {
+		var wxpayInfo
+		if (req.query.type == 'expressFee') {
+			wxpayInfo = {
+				body: '运费',
+				out_trade_no: '' + out_trade_no,
+				total_fee: req.query.fee * 100,
+			}
+		} else {
+			wxpayInfo = {
+				body: '会员费',
+				out_trade_no: '' + ctime.getFullYear() + (ctime.getMonth() + 1) + ctime.getDate() + '_' + ctime.getHours() + ctime.getMinutes() + ctime.getSeconds() + '_' + Math.random().toString().substr(2, 10),
+				total_fee: CONFIG.MEMBER_FEE,
+			}
+		}
+
+		wxpay.createUnifiedOrder({
+			body: wxpayInfo.body,
+			out_trade_no: wxpayInfo.out_trade_no,
+			total_fee: wxpayInfo.total_fee,
+			spbill_create_ip: '127.0.0.1',
+			notify_url: 'http://' + CONFIG.DOMAIN + '/' + CONFIG.PAY_DIR_FIRST + '/notify',
+			trade_type: 'JSAPI',
+			product_id: '1',
+			openid: req.session.wechatBase.openid,
+		}, function(err, result) {
+			if (err) {
+				logger.error(err)
+			}
+			logger.debug(result);
+			var reqparam = {
+				appId: CONFIG.WECHAT.APPID,
+				timeStamp: parseInt(new Date().getTime() / 1000) + "",
+				nonceStr: result.nonce_str,
+				package: "prepay_id=" + result.prepay_id,
+				signType: "MD5",
+			};
+			logger.debug(reqparam)
+			reqparam.paySign = wxpay.sign(reqparam);
+			reqparam.timestamp = reqparam.timeStamp;
+			delete reqparam.timeStamp
+			logger.debug(reqparam)
+			res.send(JSON.stringify(reqparam))
+			res.end()
+		});
+	}
 }
 
 function editBookAjax(req, res) {

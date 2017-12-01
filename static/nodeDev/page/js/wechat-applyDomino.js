@@ -38,6 +38,28 @@ wx.ready(function() {
 
 });
 
+function payExpressFee() {
+	$.ajax({
+		type: 'GET',
+		url: "../ajax/createUnifiedOrderAjax?id=" + getUrlParam('readid') + "&type=expressFee&fee=" + dominoInfo.expressDefaultFee,
+		dataType: 'json',
+		success: function(data) {
+			data.success = function(res) {
+				// alert(JSON.stringify(res));
+				//{"errMsg":"chooseWXPay:ok"}
+				if (res.errMsg == "chooseWXPay:ok") {
+					alert('支付成功');
+					window.location.href = updateUrl(window.location.href);
+				}
+			}
+			wx.chooseWXPay(data)
+		},
+		error: function(xhr, type) {
+			alert('Ajax error!');
+		}
+	});
+}
+
 function editReceiveAddress() {
 	wx.openAddress({
 		success: function(res) {
