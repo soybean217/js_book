@@ -1,0 +1,120 @@
+<html>
+	<head>
+		<script src="signWechat.js"></script>
+		<meta charset="utf-8">
+		<title>读书接龙</title>
+		<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
+		<META HTTP-EQUIV="pragma" CONTENT="no-cache">
+		<META HTTP-EQUIV="expires" CONTENT="0">
+		<meta name="viewport"
+		content="width=device-width, initial-scale=1, user-scalable=0">
+		<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+		<link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
+		<script src="https://cdn.bootcss.com/vue/2.4.4/vue.js"></script>
+	</head>
+	<body ontouchstart="">
+		<div class="container" id="container">
+			<div class="weui-tab">
+				<div class="weui-tab__panel">
+					<div class="weui-cells" id="book" v-html="bookInfo">
+					</div>
+					<div class="weui-cells" id="dominoInfo">
+						<div class="weui-cell" v-html="bookAddressInfo">
+						</div>
+						<div class="weui-cell" >接龙方式：{{dominoMethod}}
+						</div>
+						<div v-if="seenExpress">
+							<div class="weui-cell" v-html="expressAddress">
+							</div>
+							<div class="weui-cell">
+								<a href="javascript:editReceiveAddress();" class="weui-btn weui-btn_primary">修改地址</a>
+							</div>
+							<div v-if="seenPayProcess">
+								<div class="weui-cell">
+									<a href="javascript:showPayExpressFee();" class="weui-btn weui-btn_primary">支付运费</a>
+								</div>
+							</div>
+							<div class="weui-cell" v-if="seenPayed">
+								已支付运费：{{expressFee}} 元。等待分享人选择接龙对象。<br>(退费点击下面的“取消申请”按钮)
+							</div>
+						</div>
+						<div class="weui-cell">
+							<a href="javascript:cancelDomino();" class="weui-btn weui-btn_primary">取消申请</a>
+						</div>
+						<div class="weui-cell" v-if="seenExpress">
+							运费说明：<br>
+							默认运费仅供参考，请自行修改<br>
+							分享人选中接龙者时，该接龙者支付的运费会进入分享人的微信零钱账户。没有被选中的接龙者支付的运费自动退费。<br>
+							分享人确认选择前，接龙者取消申请，已支付的运费自动退费返回。如果已经被选中，由于运费已自动转给分享人，不能再取消申请和退费，请自行和分享人沟通。<br>
+							零钱支付退款实时返回到账，银行卡支付退款根据银行处理时间请自行查询。
+						</div>
+					</div>
+				</div>
+				<div class="weui-tabbar">
+					<!-- <a href="javascript:;" class="weui-tabbar__item weui-bar__item_on"><a href="javascript:;" class="weui-btn weui-btn_primary">看完分享</a></a> -->
+					
+				</div>
+			</div>
+		</div>
+		<!-- loading toast -->
+		<div id="loadingToast" style="display:none;">
+			<div class="weui-mask_transparent"></div>
+			<div class="weui-toast">
+				<i class="weui-loading weui-icon_toast"></i>
+				<p class="weui-toast__content">数据加载中</p>
+			</div>
+		</div>
+		<div class="js_dialog" id="iosDialog2" style="display: none;">
+			<div class="weui-mask"></div>
+			<div class="weui-dialog">
+				<div class="weui-dialog__bd">点击右上角按钮，即可分享到朋友圈，或发给好友</div>
+				<div class="weui-dialog__ft">
+					<a href="javascript:closeShareTip();" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
+				</div>
+			</div>
+		</div>
+		<div class="js_dialog" id="chooseMethodDialog" style="display: none;">
+			<div class="weui-mask"></div>
+			<div class="weui-dialog">
+				<div class="weui-dialog__hd"><strong class="weui-dialog__title">选择接龙方式</strong></div>
+				<div class="weui-dialog__bd">选择快递将需要提供收件地址和快递费</div>
+				<div class="weui-dialog__ft">
+					<a href="javascript:takeBookByHand();" class="weui-dialog__btn weui-dialog__btn_default">见面接龙</a>
+					<a href="javascript:editReceiveAddress();" class="weui-dialog__btn weui-dialog__btn_primary">快递</a>
+				</div>
+			</div>
+		</div>
+	</body>
+	<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+	<script>
+		var imgUrl = '{{imgUrl}}';
+		wx.config({
+			debug : sign.debug,
+			appId :sign.appId
+		,
+			timestamp :sign.timestamp
+		,
+			nonceStr :sign.nonceStr
+		,
+			signature :sign.signature
+		,
+			jsApiList : [ 'checkJsApi', 'onMenuShareTimeline',
+					'onMenuShareAppMessage', 'onMenuShareQQ', 'onMenuShareWeibo',
+					'onMenuShareQZone', 'hideMenuItems', 'showMenuItems',
+					'hideAllNonBaseMenuItem', 'showAllNonBaseMenuItem',
+					'translateVoice', 'startRecord', 'stopRecord',
+					'onVoiceRecordEnd', 'playVoice', 'onVoicePlayEnd',
+					'pauseVoice', 'stopVoice', 'uploadVoice', 'downloadVoice',
+					'chooseImage', 'previewImage', 'uploadImage', 'downloadImage',
+					'getNetworkType', 'openLocation', 'getLocation',
+					'hideOptionMenu', 'showOptionMenu', 'closeWindow',
+					'scanQRCode', 'chooseWXPay', 'openProductSpecificView',
+					'addCard', 'chooseCard', 'openCard' ]
+		});
+	</script>
+	<!-- <script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script> -->
+	<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
+	<script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+	<script src="js/private-util.js"></script>
+	<script src="js/wechat-applyDomino.js"></script>
+</html>

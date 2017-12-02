@@ -58,3 +58,5 @@ typings/
 .env
 
 /config.js
+/apiclient_cert.p12
+/config.js

@@ -657,8 +657,8 @@ function getReadInfoWithIdAjax(req, res) {
 }
 
 function getApplyDominoInfoWithReadIdAjax(req, res) {
-	if (req.session.wechatUserInfo) {
-		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatUserInfo.openid, req.query.readId], function(err, rows, fields) {
+	if (req.session.wechatBase) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
 			} else {
@@ -680,9 +680,78 @@ function getApplyDominoInfoWithReadIdAjax(req, res) {
 
 }
 
+function cancelDominoAjax(req, res) {
+	poolConfig.query("SELECT * FROM  `tbl_apply_dominos`  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+			fail({
+				status: 'db err'
+			})
+		} else {
+			logger.debug('cancelDominoAjax:', rows)
+			if (rows.length == 1) {
+				if (rows[0].expressFeePayStatus == 'payed') {
+					refund(rows[0], succ, fail)
+				}
+			} else {
+				fail({
+					status: 'no record'
+				})
+			}
+		}
+	});
+
+	function succ() {
+		res.send('{"status":"ok"}')
+		res.end()
+	}
+
+	function fail(data) {
+		if (data) {
+			return res.send(JSON.stringify(data))
+		} else {
+			return res.send('{"status":"error"}')
+		}
+	}
+}
+
+var WXPay = require('weixin-pay');
+var wxpay = WXPay({
+	appid: CONFIG.WECHAT.APPID,
+	mch_id: CONFIG.WXPAY.MCH_ID,
+	partner_key: CONFIG.WXPAY.PARTNER_KEY, //微信商户平台API密钥
+	pfx: fs.readFileSync('./apiclient_cert.p12'), //微信商户平台证书
+});
+
+function refund(record, succ, fail) {
+	var ctime = new Date()
+	var params = {
+		appid: CONFIG.WECHAT.APPID,
+		mch_id: CONFIG.WXPAY.MCH_ID,
+		op_user_id: CONFIG.WXPAY.MCH_ID,
+		out_refund_no: '' + ctime.getFullYear() + (ctime.getMonth() + 1) + ctime.getDate() + '_' + ctime.getHours() + ctime.getMinutes() + ctime.getSeconds() + '_' + Math.random().toString().substr(2, 10),
+		total_fee: record.expressFee * 100, //原支付金额
+		refund_fee: record.expressFee * 100, //退款金额
+		transaction_id: record.transactionId,
+	};
+
+	wxpay.refund(params, function(err, result) {
+		if (err) {
+			logger.debug('refund err:', err);
+		}
+		if (result.err_code) {
+			data = {
+				status: result.err_code_des
+			}
+			fail(result)
+		}
+		logger.debug('refund', result);
+	})
+}
+
 function insertApplyDominos(req, res, dominoMethod, address) {
 	var id = (new Date()).getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random()
-	poolConfig.query("insert tbl_apply_dominos (id,openId,readId,dominoMethod,expressAddress) values(?,?,?,?,?) ", [id, req.session.wechatUserInfo.openid, req.body.readId, dominoMethod, address], function(err, rows, fields) {
+	poolConfig.query("insert tbl_apply_dominos (id,openId,readId,dominoMethod,expressAddress) values(?,?,?,?,?) ", [id, req.session.wechatBase.openid, req.body.readId, dominoMethod, address], function(err, rows, fields) {
 		if (err) {
 			logger.error(err);
 		} else {
@@ -793,15 +862,8 @@ function listReadAjax(req, res) {
 	});
 }
 
-var WXPay = require('weixin-pay');
-
 function createUnifiedOrderAjax(req, res) {
-	var wxpay = WXPay({
-		appid: CONFIG.WECHAT.APPID,
-		mch_id: CONFIG.WXPAY.MCH_ID,
-		partner_key: CONFIG.WXPAY.PARTNER_KEY, //微信商户平台API密钥
-		// pfx: fs.readFileSync('./wxpay_cert.p12'), //微信商户平台证书
-	});
+
 
 	var ctime = new Date()
 	var out_trade_no = ctime.getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random();
@@ -851,7 +913,7 @@ function createUnifiedOrderAjax(req, res) {
 			if (err) {
 				logger.error(err)
 			}
-			logger.debug(result);
+			// logger.debug('createUnifiedOrder result:', result);
 			var reqparam = {
 				appId: CONFIG.WECHAT.APPID,
 				timeStamp: parseInt(new Date().getTime() / 1000) + "",
@@ -859,11 +921,10 @@ function createUnifiedOrderAjax(req, res) {
 				package: "prepay_id=" + result.prepay_id,
 				signType: "MD5",
 			};
-			logger.debug(reqparam)
+			// logger.debug('createUnifiedOrder reqparam:', reqparam)
 			reqparam.paySign = wxpay.sign(reqparam);
 			reqparam.timestamp = reqparam.timeStamp;
 			delete reqparam.timeStamp
-			logger.debug(reqparam)
 			res.send(JSON.stringify(reqparam))
 			res.end()
 		});
@@ -1082,6 +1143,7 @@ app.post(CONFIG.DIR_FIRST + '/ajax/actLogAjax', jsonParser, actLogAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/listReadAjax', listReadAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getApplyDominoInfoWithReadIdAjax', getApplyDominoInfoWithReadIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/cancelDominoAjax', cancelDominoAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', jsonParser, syncRadioStatusWithReadIdAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncDominoMethodWithReadIdAjax', jsonParser, syncDominoMethodWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/createUnifiedOrderAjax', createUnifiedOrderAjax);

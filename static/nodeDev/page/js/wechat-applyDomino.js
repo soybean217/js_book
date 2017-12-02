@@ -38,10 +38,23 @@ wx.ready(function() {
 
 });
 
-function payExpressFee() {
+function showPayExpressFee() {
+	$.prompt({
+		title: '请输入运费',
+		text: '运费请自行根据距离花费自己修改',
+		input: dominoInfo.expressDefaultFee,
+		empty: false, // 是否允许为空
+		onOK: function(input) {
+			payExpressFee(input)
+		},
+		onCancel: function() {}
+	});
+}
+
+function payExpressFee(fee) {
 	$.ajax({
 		type: 'GET',
-		url: "../ajax/createUnifiedOrderAjax?id=" + getUrlParam('readid') + "&type=expressFee&fee=" + dominoInfo.expressDefaultFee,
+		url: "../ajax/createUnifiedOrderAjax?id=" + getUrlParam('readid') + "&type=expressFee&fee=" + fee,
 		dataType: 'json',
 		success: function(data) {
 			data.success = function(res) {
@@ -53,6 +66,24 @@ function payExpressFee() {
 				}
 			}
 			wx.chooseWXPay(data)
+		},
+		error: function(xhr, type) {
+			alert('Ajax error!');
+		}
+	});
+}
+
+function cancelDomino(fee) {
+	$.ajax({
+		type: 'GET',
+		url: "../ajax/cancelDominoAjax?readId=" + getUrlParam('readid'),
+		dataType: 'json',
+		success: function(data) {
+			var rev = JSON.parse(data);
+			console.log(rev)
+			if (rev.status && rev.status == 'ok') {
+
+			}
 		},
 		error: function(xhr, type) {
 			alert('Ajax error!');
