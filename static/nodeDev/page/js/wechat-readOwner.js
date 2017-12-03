@@ -244,8 +244,23 @@ function getReadInfoWithId(id) {
         vueRadioDomino.seen = true
         if (readInfo[0].openDomino) {
           showBookAddress(JSON.parse(readInfo[0].bookAddress))
+          getDominoApplysWithReadId(id)
         }
       }
+    },
+    error: function(xhr, status) {
+      alert(JSON.stringify(status));
+    },
+  });
+}
+
+function getDominoApplysWithReadId(readId) {
+  $.ajax({
+    url: "../ajax/getDominoApplysWithReadIdAjax?readId=" + readId,
+    type: "get",
+    contentType: "application/json",
+    success: function(result) {
+      console.log(result)
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));

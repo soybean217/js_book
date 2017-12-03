@@ -159,6 +159,7 @@ app.use(function(req, res, next) {
 			});
 			response.on('end', function() {
 				var rev = JSON.parse(body);
+				logger.debug('baseinfo', rev)
 				if (rev.openid) {
 					// async update user info to db
 					insertOrUpdateWechatUser(rev, CONFIG.WECHAT.APPID);
@@ -188,7 +189,7 @@ app.use(function(req, res, next) {
 					req.session.userInfoFromDb = rowRs[0];
 					//if no response any more . need save .
 					req.session.save(null)
-					poolConfig.query("update tbl_wechat_users set lastLoginTime=? where openId=?  ", [ctimeSecond, wechatBase.openid], function(err, rows, fields) {
+					poolConfig.query("update tbl_wechat_users set lastLoginTime=?,unionId=? where openId=?  ", [ctimeSecond, wechatBase.unionid, wechatBase.openid], function(err, rows, fields) {
 						if (err) {
 							logger.error(err);
 						} else {
@@ -283,6 +284,16 @@ app.use(function(req, res, next) {
 				logger.debug('userinfo', rev);
 				if (rev.openid) {
 					req.session.wechatUserInfo = rev
+					poolConfig.query("update tbl_wechat_users set nickName=?,headImgUrl=? where openId=?  ", [rev.nickname, rev.headimgurl, rev.openid], function(err, rows, fields) {
+						if (err) {
+							logger.error(err);
+						} else {
+							if (!rows.constructor.name == 'OkPacket') {
+								logger.error('update tbl_wechat_users set getUserInfoWithOpenId:')
+								logger.error(rows)
+							}
+						}
+					})
 					redirectAfterOAuthSuccess();
 				} else {
 					logger.error(url)
@@ -631,7 +642,7 @@ function checkReadAuthorize(req, res, readId, tag, success, fail) {
 }
 
 function getReadInfoWithIdAjax(req, res) {
-
+	var tag = 'getReadInfoWithIdAjax'
 	poolConfig.query("SELECT * FROM  `tbl_reads`,tbl_wechat_users WHERE tbl_reads.openId=tbl_wechat_users.openId  and tbl_reads.id = ?", [req.query.readId], function(err, rows, fields) {
 		if (err) {
 			logger.error(err);
@@ -639,9 +650,30 @@ function getReadInfoWithIdAjax(req, res) {
 			if (rows.length > 0) {
 				return succ(rows)
 			} else {
-				logger.warn(tag + ' book is not exist . ' + req.url)
+				logger.warn(tag + ' record is not exist . ' + req.url)
 				return fail()
 			}
+		}
+	});
+
+	function succ(rows) {
+		res.send(JSON.stringify(rows))
+		res.end()
+	}
+
+	function fail() {
+		return res.send('{"status":"error"}')
+	}
+
+}
+
+function getDominoApplysWithReadIdAjax(req, res) {
+	poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_wechat_users on tbl_apply_dominos.openid= tbl_wechat_users.openid WHERE tbl_apply_dominos.readId  = ?", [req.query.readId], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+			fail()
+		} else {
+			return succ(rows)
 		}
 	});
 
@@ -688,10 +720,11 @@ function cancelDominoAjax(req, res) {
 				status: 'db err'
 			})
 		} else {
-			logger.debug('cancelDominoAjax:', rows)
 			if (rows.length == 1) {
 				if (rows[0].expressFeePayStatus == 'payed') {
-					refund(rows[0], succ, fail)
+					refund(rows[0], deleteDominoApply, fail)
+				} else {
+					deleteDominoApply()
 				}
 			} else {
 				fail({
@@ -700,6 +733,19 @@ function cancelDominoAjax(req, res) {
 			}
 		}
 	});
+
+	function deleteDominoApply() {
+		poolConfig.query("delete from `tbl_apply_dominos` WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+				fail({
+					status: 'db err'
+				})
+			} else {
+				succ()
+			}
+		});
+	}
 
 	function succ() {
 		res.send('{"status":"ok"}')
@@ -740,32 +786,22 @@ function refund(record, succ, fail) {
 			logger.debug('refund err:', err);
 		}
 		if (result.err_code) {
-			data = {
-				status: result.err_code_des
+			if (result.err_code_des == '订单已全额退款') {
+				succ()
+			} else {
+				var rspData = {
+					status: result.err_code_des
+				}
+				fail(rspData)
 			}
-			fail(result)
+		} else {
+			succ()
 		}
 		logger.debug('refund', result);
 	})
 }
 
-function insertApplyDominos(req, res, dominoMethod, address) {
-	var id = (new Date()).getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random()
-	poolConfig.query("insert tbl_apply_dominos (id,openId,readId,dominoMethod,expressAddress) values(?,?,?,?,?) ", [id, req.session.wechatBase.openid, req.body.readId, dominoMethod, address], function(err, rows, fields) {
-		if (err) {
-			logger.error(err);
-		} else {
-			if (!(rows.constructor.name == 'OkPacket')) {
-				logger.error('error insertApplyDominos sql:')
-				logger.error(rows)
-				res.send('{"status":"error"}')
-			} else {
-				res.send('{"status":"ok"}')
-				res.end()
-			}
-		}
-	});
-}
+
 
 function syncDominoMethodWithReadIdAjax(req, res) {
 	if (req.session.wechatUserInfo) {
@@ -782,6 +818,24 @@ function syncDominoMethodWithReadIdAjax(req, res) {
 		});
 	} else {
 		return fail()
+	}
+
+	function insertApplyDominos(req, res, dominoMethod, address) {
+		var id = (new Date()).getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random()
+		poolConfig.query("insert tbl_apply_dominos (id,openId,unionid,readId,dominoMethod,expressAddress) values(?,?,?,?,?,?) ", [id, req.session.wechatBase.openid, req.session.wechatBase.unionid, req.body.readId, dominoMethod, address], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				if (!(rows.constructor.name == 'OkPacket')) {
+					logger.error('error insertApplyDominos sql:')
+					logger.error(rows)
+					res.send('{"status":"error"}')
+				} else {
+					res.send('{"status":"ok"}')
+					res.end()
+				}
+			}
+		});
 	}
 
 	function updateApplyDominos() {
@@ -1142,6 +1196,7 @@ app.post(CONFIG.DIR_FIRST + '/ajax/editNoteAjax', jsonParser, editNoteAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/actLogAjax', jsonParser, actLogAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/listReadAjax', listReadAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/getDominoApplysWithReadIdAjax', getDominoApplysWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getApplyDominoInfoWithReadIdAjax', getApplyDominoInfoWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/cancelDominoAjax', cancelDominoAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', jsonParser, syncRadioStatusWithReadIdAjax);

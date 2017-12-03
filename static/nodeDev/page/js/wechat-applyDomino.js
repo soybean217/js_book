@@ -74,15 +74,19 @@ function payExpressFee(fee) {
 }
 
 function cancelDomino(fee) {
+	var readId = getUrlParam('readid')
 	$.ajax({
 		type: 'GET',
-		url: "../ajax/cancelDominoAjax?readId=" + getUrlParam('readid'),
+		url: "../ajax/cancelDominoAjax?readId=" + readId,
 		dataType: 'json',
-		success: function(data) {
-			var rev = JSON.parse(data);
+		success: function(rev) {
 			console.log(rev)
 			if (rev.status && rev.status == 'ok') {
-
+				$.alert("取消成功", function() {
+					location = 'read?id=' + readId
+				});
+			} else {
+				$.alert(rev.status);
 			}
 		},
 		error: function(xhr, type) {
@@ -149,6 +153,7 @@ var dominoInfo = new Vue({
 		seenPayProcess: true,
 		seenPayed: true,
 		expressDefaultFee: 0,
+		bookAddressInfo: '',
 		expressFee: 0,
 	},
 })
@@ -160,7 +165,7 @@ function getApplyDominoInfoWithReadId(id) {
 		contentType: "application/json",
 		success: function(result) {
 			info = JSON.parse(result);
-			console.log(info)
+			// $('#loadingToast').css("display", "none")
 			if (info.length > 0) {
 				book.bookInfo = htmlBookInfo(info[0])
 				bookAddress = JSON.parse(info[0].bookAddress)
@@ -187,9 +192,23 @@ function getApplyDominoInfoWithReadId(id) {
 				} else if (info[0].dominoMethod == 'byHand') {
 					dominoInfo.dominoMethod = "见面接龙书籍"
 				}
-				$('#chooseMethodDialog').css("display", "none")
 			} else {
-				$('#chooseMethodDialog').css("display", "block")
+				$.modal({
+					title: "选择接龙方式",
+					text: "选择快递将需要提供收件地址和快递费",
+					buttons: [{
+						text: "见面接龙",
+						className: "default",
+						onClick: function() {
+							takeBookByHand()
+						}
+					}, {
+						text: "快递",
+						onClick: function() {
+							editReceiveAddress()
+						}
+					}, ]
+				});
 			}
 		},
 		error: function(xhr, status) {
