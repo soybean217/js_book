@@ -254,6 +254,14 @@ function getReadInfoWithId(id) {
   });
 }
 
+var dominoApplyInfo = new Vue({
+  el: '#dominoApplyInfo',
+  data: {
+    innerHtml: '',
+    seen: false,
+  },
+})
+
 function getDominoApplysWithReadId(readId) {
   $.ajax({
     url: "../ajax/getDominoApplysWithReadIdAjax?readId=" + readId,
@@ -261,6 +269,18 @@ function getDominoApplysWithReadId(readId) {
     contentType: "application/json",
     success: function(result) {
       console.log(result)
+      rev = JSON.parse(result);
+      if (rev.length > 0) {
+        var tmp = ''
+        for (i in rev) {
+          var rowImgUrl = rev[i].headImgUrl.substr(0, rev[i].headImgUrl.length - 2) + '/46'
+          tmp += '<img src="' + rowImgUrl + '">'
+        }
+        dominoApplyInfo.dominoApplyCount = rev.length
+        dominoApplyInfo.innerHtml = tmp
+        dominoApplyInfo.seen = true
+        console.log(dominoApplyInfo.innerHtml)
+      }
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));

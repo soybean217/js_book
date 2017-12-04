@@ -30,6 +30,12 @@
 						<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
 						</div>
 					</div>
+					<div id="dominoApplyInfo" v-if='seen'>
+						<div  class="weui-cell" >正在申请接龙的用户共 {{dominoApplyCount}} 人
+						</div>
+						<div  class="weui-cell" v-html="innerHtml">
+						</div>
+					</div>
 				</div>
 				<div class="weui-cells" id="notes">{{scriptPicData}}{{notes}}
 				</div>
