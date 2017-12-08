@@ -139,6 +139,10 @@ wx.ready(function() {
 
 });
 
+function goPageListApply() {
+  location = 'listApplyDomino.htm?readid=' + getUrlParam('id')
+}
+
 var readInfo = null;
 
 var vueRadioDomino = new Vue({
@@ -264,19 +268,19 @@ var dominoApplyInfo = new Vue({
 
 function getDominoApplysWithReadId(readId) {
   $.ajax({
-    url: "../ajax/getDominoApplysWithReadIdAjax?readId=" + readId,
+    url: "../ajax/getDominoApplyListWithReadIdAjax?readId=" + readId,
     type: "get",
     contentType: "application/json",
     success: function(result) {
       console.log(result)
       rev = JSON.parse(result);
-      if (rev.length > 0) {
+      if (rev.applyList && rev.applyList.length > 0) {
         var tmp = ''
-        for (i in rev) {
-          var rowImgUrl = rev[i].headImgUrl.substr(0, rev[i].headImgUrl.length - 2) + '/46'
+        for (i in rev.applyList) {
+          var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
           tmp += '<img src="' + rowImgUrl + '">'
         }
-        dominoApplyInfo.dominoApplyCount = rev.length
+        dominoApplyInfo.dominoApplyCount = rev.applyList.length
         dominoApplyInfo.innerHtml = tmp
         dominoApplyInfo.seen = true
         console.log(dominoApplyInfo.innerHtml)

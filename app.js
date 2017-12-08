@@ -1,4 +1,4 @@
-'use strict';
+// 'use strict';
 var express = require('express');
 var session = require('express-session');
 var RedisStore = require('connect-redis')(session);
@@ -521,6 +521,22 @@ function checkNoteAuthorize(req, res, bookId, tag, success, fail) {
 	});
 }
 
+function getReadFullInfo(readid, succ, fail) {
+	var tag = 'getReadFullInfo'
+	poolConfig.query("SELECT * FROM tbl_reads left join tbl_books on tbl_books.id=tbl_reads.bookId left join tbl_wechat_users on tbl_reads.openid = tbl_wechat_users.openId WHERE  tbl_reads.id = ?", [readid], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+		} else {
+			if (rows.length > 0) {
+				succ(rows[0])
+			} else {
+				logger.warn(tag + ' record is not exist . ' + req.url)
+				return fail()
+			}
+		}
+	});
+}
+
 function editNoteAjax(req, res) {
 	if (!req.body) return res.sendStatus(400)
 	if (req.body.id) {
@@ -627,7 +643,7 @@ function checkReadAuthorize(req, res, readId, tag, success, fail) {
 					return fail()
 				}
 			} else {
-				logger.warn(tag + ' book is not exist . ' + req.url)
+				logger.warn(tag + ' record is not exist . ' + req.url)
 				return fail()
 			}
 		}
@@ -667,15 +683,41 @@ function getReadInfoWithIdAjax(req, res) {
 
 }
 
-function getDominoApplysWithReadIdAjax(req, res) {
-	poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_wechat_users on tbl_apply_dominos.openid= tbl_wechat_users.openid WHERE tbl_apply_dominos.readId  = ?", [req.query.readId], function(err, rows, fields) {
-		if (err) {
-			logger.error(err);
-			fail()
-		} else {
-			return succ(rows)
-		}
-	});
+function getDominoApplyListWithReadIdAjax(req, res) {
+
+	getReadFullInfo(req.query.readId, getApplyList, fail)
+
+	function getApplyList(readInfo) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_wechat_users on tbl_apply_dominos.openid= tbl_wechat_users.openid WHERE tbl_apply_dominos.readId  = ?", [req.query.readId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+				fail()
+			} else {
+				for (var i in rows) {
+					if (rows[i].expressAddress && rows[i].expressAddress.length > 6) {
+						var addressInfo = JSON.parse(rows[i].expressAddress)
+						if (addressInfo.provinceName && addressInfo.cityName) {
+							rows[i].expressAddress = {
+								provinceName: addressInfo.provinceName,
+								cityName: addressInfo.cityName,
+							}
+						}
+					}
+				}
+				var rsp = {
+					readInfo: readInfo,
+					applyList: rows,
+					baseInfo: {
+						openid: req.session.wechatBase.openid,
+						unionid: req.session.wechatBase.unionid,
+					}
+				}
+				logger.debug('req.session.wechatBase', req.session.wechatBase)
+				return succ(rsp)
+			}
+		});
+	}
+
 
 	function succ(rows) {
 		res.send(JSON.stringify(rows))
@@ -689,10 +731,41 @@ function getDominoApplysWithReadIdAjax(req, res) {
 }
 
 function getApplyDominoInfoWithReadIdAjax(req, res) {
+
 	if (req.session.wechatBase) {
 		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
+				return fail()
+			} else {
+				return succ(rows)
+			}
+		});
+	} else {
+		return fail()
+	}
+
+	function succ(rows) {
+		res.send(JSON.stringify(rows))
+		res.end()
+	}
+
+	function fail() {
+		return res.send('{"status":"error"}')
+	}
+
+}
+
+function chooseDominoApplysWithOpenIdAjax(req, res) {
+
+	//check auth
+	checkReadAuthorize(req, res, req.query.readId, 'syncRadioStatusWithReadIdAjax', succ, fail)
+
+	if (req.session.wechatBase) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+				return fail()
 			} else {
 				return succ(rows)
 			}
@@ -769,6 +842,19 @@ var wxpay = WXPay({
 	pfx: fs.readFileSync('./apiclient_cert.p12'), //微信商户平台证书
 });
 
+function logRefund(params, result) {
+	poolLog.query("insert log_sync_generals (id,logId,para01,para02) values(?,?,?,?)", [new Date().getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random(), 301, JSON.stringify(params), JSON.stringify(result)], function(err, rows, fields) {
+		if (err) {
+			logger.error(err);
+		} else {
+			if (!(rows.constructor.name == 'OkPacket')) {
+				logger.error('error logRefund sql:')
+				logger.error(rows)
+			}
+		}
+	});
+}
+
 function refund(record, succ, fail) {
 	var ctime = new Date()
 	var params = {
@@ -785,6 +871,7 @@ function refund(record, succ, fail) {
 		if (err) {
 			logger.debug('refund err:', err);
 		}
+		logRefund(params, result)
 		if (result.err_code) {
 			if (result.err_code_des == '订单已全额退款') {
 				succ()
@@ -915,6 +1002,8 @@ function listReadAjax(req, res) {
 		}
 	});
 }
+
+
 
 function createUnifiedOrderAjax(req, res) {
 
@@ -1196,8 +1285,9 @@ app.post(CONFIG.DIR_FIRST + '/ajax/editNoteAjax', jsonParser, editNoteAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/actLogAjax', jsonParser, actLogAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/listReadAjax', listReadAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax);
-app.get(CONFIG.DIR_FIRST + '/ajax/getDominoApplysWithReadIdAjax', getDominoApplysWithReadIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/getDominoApplyListWithReadIdAjax', getDominoApplyListWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getApplyDominoInfoWithReadIdAjax', getApplyDominoInfoWithReadIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/chooseDominoApplysWithOpenIdAjax', chooseDominoApplysWithOpenIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/cancelDominoAjax', cancelDominoAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', jsonParser, syncRadioStatusWithReadIdAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncDominoMethodWithReadIdAjax', jsonParser, syncDominoMethodWithReadIdAjax);
