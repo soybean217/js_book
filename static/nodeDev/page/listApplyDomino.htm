@@ -10,6 +10,7 @@
 	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
 	<link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
 	<script src="https://cdn.bootcss.com/vue/2.4.4/vue.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 </head>
 <body ontouchstart="">
 	<div class="container" id="container">
@@ -25,8 +26,7 @@
 						<div class="weui-cell__bd">
 							<p>{{item.nickName}}({{item.method}}){{item.aboutCity}}</p>
 						</div>
-						<div class="weui-cell__ft">
-							<button class="weui-btn weui-btn_primary">选择</button>
+						<div class="weui-cell__ft" v-html="item.ftHtml">
 						</div>
 					</div>
 				</div>

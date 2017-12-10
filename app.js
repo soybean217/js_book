@@ -688,7 +688,7 @@ function getDominoApplyListWithReadIdAjax(req, res) {
 	getReadFullInfo(req.query.readId, getApplyList, fail)
 
 	function getApplyList(readInfo) {
-		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_wechat_users on tbl_apply_dominos.openid= tbl_wechat_users.openid WHERE tbl_apply_dominos.readId  = ?", [req.query.readId], function(err, rows, fields) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_wechat_users on tbl_apply_dominos.openid= tbl_wechat_users.openid WHERE tbl_apply_dominos.readId  = ? order by dominoStatus", [req.query.readId], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
 				fail()
@@ -757,27 +757,113 @@ function getApplyDominoInfoWithReadIdAjax(req, res) {
 }
 
 function chooseDominoApplysWithOpenIdAjax(req, res) {
+	var tag = 'chooseDominoApplysWithOpenIdAjax'
 
 	//check auth
-	checkReadAuthorize(req, res, req.query.readId, 'syncRadioStatusWithReadIdAjax', succ, fail)
+	checkReadAuthorize(req, res, req.query.readId, tag, procChoose, fail)
 
-	if (req.session.wechatBase) {
-		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid  WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
+	function procChoose(info) {
+		poolConfig.query("SELECT *,tbl_reads.id as readId,tbl_apply_dominos.id as applyId,tbl_apply_dominos.openId as applyOpenId,tbl_reads.openId as ownerOpenId FROM  `tbl_apply_dominos` left join tbl_reads on tbl_reads.id=tbl_apply_dominos.readId left join tbl_books on tbl_books.id=tbl_reads.bookid left join tbl_wechat_users on tbl_apply_dominos.openId=tbl_wechat_users.openid  WHERE  tbl_apply_dominos.readId = ?", [req.query.readId], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
 				return fail()
 			} else {
-				return succ(rows)
+				for (var i in rows) {
+					if (rows[i].expressFeePayStatus == 'payed' && rows[i].applyOpenId != req.query.openId) {
+						refund(rows[i], changeApplyPayStatus, function(info) {
+							logger.debug(info)
+						})
+					} else if (rows[i].applyOpenId == req.query.openId) {
+						if (rows[i].expressFeePayStatus == 'payed') {
+							transferExpressFee(rows[i])
+						}
+					}
+				}
 			}
 		});
-	} else {
-		return fail()
 	}
 
-	function succ(rows) {
-		res.send(JSON.stringify(rows))
-		res.end()
+	function changeApplyPayStatus(info) {
+		poolConfig.query("update tbl_apply_dominos set expressFeePayStatus='refund' WHERE  id = ?", [info.applyId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			}
+		});
 	}
+
+	function transferExpressFee(info) {
+		var params = {
+			partner_trade_no: strForOrderWithDate(), // 订单号
+			openid: req.session.wechatBase.openid,
+			amount: parseInt(info.expressFee * 100), // 分为单位
+			desc: info.nickName + ' 支付《' + info.bookName + '》的运费',
+			spbill_create_ip: '192.168.2.210', // ip,
+			check_name: 'NO_CHECK', //默认为 NO_CHECK, 可不填
+		}
+		wxpay.transfer(params, function(err, result) {
+			logToWechatPayProcess(params, arguments, 311)
+			logger.debug('transfer', arguments);
+			if (result.return_code == 'SUCCESS' && result.result_code == 'SUCCESS') {
+				rejectOtherApply(info)
+				chooseApply(info)
+			}
+		});
+	}
+
+	function rejectOtherApply(info) {
+		poolConfig.query("update tbl_apply_dominos set dominoStatus='reject' WHERE  readId=? and openId <> ?", [info.readId, info.applyOpenId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			}
+		});
+	}
+
+	function chooseApply(info) {
+		poolConfig.query("update tbl_apply_dominos set dominoStatus='chosen' WHERE  readId=? and openId = ?", [info.readId, info.applyOpenId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+			} else {
+				poolConfig.query("update tbl_reads set dominoOpenId=? WHERE  id=?", [info.applyOpenId, info.readId], function(err, rows, fields) {
+					if (err) {
+						logger.error(err);
+					} else {
+						succ()
+					}
+				});
+			}
+		});
+	}
+
+	function succ() {
+		return res.send('{"status":"ok"}')
+	}
+
+	function fail() {
+		return res.send('{"status":"error"}')
+	}
+
+}
+
+function getChosenApplyAddressAjax(req, res) {
+
+	//check auth
+	checkReadAuthorize(req, res, req.query.readId, 'getChosenApplyAddressAjax', procChoose, fail)
+
+	function procChoose(info) {
+		poolConfig.query("SELECT expressAddress FROM  `tbl_apply_dominos` WHERE  tbl_apply_dominos.readId = ? and openid=? and dominoStatus='chosen' ", [req.query.readId, req.query.openId], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+				return fail()
+			} else {
+				if (rows.length == 1) {
+					res.send(rows[0].expressAddress)
+				} else {
+					return fail()
+				}
+			}
+		});
+	}
+
 
 	function fail() {
 		return res.send('{"status":"error"}')
@@ -797,7 +883,7 @@ function cancelDominoAjax(req, res) {
 				if (rows[0].expressFeePayStatus == 'payed') {
 					refund(rows[0], deleteDominoApply, fail)
 				} else {
-					deleteDominoApply()
+					deleteDominoApply(null)
 				}
 			} else {
 				fail({
@@ -807,7 +893,7 @@ function cancelDominoAjax(req, res) {
 		}
 	});
 
-	function deleteDominoApply() {
+	function deleteDominoApply(info) {
 		poolConfig.query("delete from `tbl_apply_dominos` WHERE tbl_apply_dominos.openId=?  and tbl_apply_dominos.readId = ?", [req.session.wechatBase.openid, req.query.readId], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
@@ -842,26 +928,33 @@ var wxpay = WXPay({
 	pfx: fs.readFileSync('./apiclient_cert.p12'), //微信商户平台证书
 });
 
-function logRefund(params, result) {
-	poolLog.query("insert log_sync_generals (id,logId,para01,para02) values(?,?,?,?)", [new Date().getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random(), 301, JSON.stringify(params), JSON.stringify(result)], function(err, rows, fields) {
+
+function logToWechatPayProcess(params, result, logId) {
+	var tag = 'logToWechatPayProcess'
+	poolLog.query("insert log_async_generals (id,logId,para01,para02) values(?,?,?,?)", [new Date().getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random(), logId, JSON.stringify(params), JSON.stringify(result)], function(err, rows, fields) {
 		if (err) {
 			logger.error(err);
 		} else {
 			if (!(rows.constructor.name == 'OkPacket')) {
-				logger.error('error logRefund sql:')
+				logger.error('error ' + tag + ' sql:')
 				logger.error(rows)
 			}
 		}
 	});
 }
 
-function refund(record, succ, fail) {
+function strForOrderWithDate() {
 	var ctime = new Date()
+	return '' + ctime.getFullYear() + (ctime.getMonth() + 1) + ctime.getDate() + 'X' + ctime.getHours() + ctime.getMinutes() + ctime.getSeconds() + 'X' + Math.random().toString().substr(2, 10)
+}
+
+function refund(record, succ, fail) {
+
 	var params = {
 		appid: CONFIG.WECHAT.APPID,
 		mch_id: CONFIG.WXPAY.MCH_ID,
 		op_user_id: CONFIG.WXPAY.MCH_ID,
-		out_refund_no: '' + ctime.getFullYear() + (ctime.getMonth() + 1) + ctime.getDate() + '_' + ctime.getHours() + ctime.getMinutes() + ctime.getSeconds() + '_' + Math.random().toString().substr(2, 10),
+		out_refund_no: strForOrderWithDate(),
 		total_fee: record.expressFee * 100, //原支付金额
 		refund_fee: record.expressFee * 100, //退款金额
 		transaction_id: record.transactionId,
@@ -871,10 +964,10 @@ function refund(record, succ, fail) {
 		if (err) {
 			logger.debug('refund err:', err);
 		}
-		logRefund(params, result)
+		logToWechatPayProcess(params, result, 301)
 		if (result.err_code) {
 			if (result.err_code_des == '订单已全额退款') {
-				succ()
+				succ(record)
 			} else {
 				var rspData = {
 					status: result.err_code_des
@@ -882,7 +975,7 @@ function refund(record, succ, fail) {
 				fail(rspData)
 			}
 		} else {
-			succ()
+			succ(record)
 		}
 		logger.debug('refund', result);
 	})
@@ -1038,7 +1131,7 @@ function createUnifiedOrderAjax(req, res) {
 		} else {
 			wxpayInfo = {
 				body: '会员费',
-				out_trade_no: '' + ctime.getFullYear() + (ctime.getMonth() + 1) + ctime.getDate() + '_' + ctime.getHours() + ctime.getMinutes() + ctime.getSeconds() + '_' + Math.random().toString().substr(2, 10),
+				out_trade_no: strForOrderWithDate(),
 				total_fee: CONFIG.MEMBER_FEE,
 			}
 		}
@@ -1288,6 +1381,7 @@ app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax)
 app.get(CONFIG.DIR_FIRST + '/ajax/getDominoApplyListWithReadIdAjax', getDominoApplyListWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getApplyDominoInfoWithReadIdAjax', getApplyDominoInfoWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/chooseDominoApplysWithOpenIdAjax', chooseDominoApplysWithOpenIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/getChosenApplyAddressAjax', getChosenApplyAddressAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/cancelDominoAjax', cancelDominoAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncRadioStatusWithReadIdAjax', jsonParser, syncRadioStatusWithReadIdAjax);
 app.post(CONFIG.DIR_FIRST + '/ajax/syncDominoMethodWithReadIdAjax', jsonParser, syncDominoMethodWithReadIdAjax);
