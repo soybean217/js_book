@@ -1,14 +1,4 @@
-/*
- * 注意：
- * 1. 所有的JS接口只能在公众号绑定的域名下调用，公众号开发者需要先登录微信公众平台进入“公众号设置”的“功能设置”里填写“JS接口安全域名”。
- * 2. 如果发现在 Android 不能分享自定义内容，请到官网下载最新的包覆盖安装，Android 自定义分享接口需升级至 6.0.2.58 版本及以上。
- * 3. 完整 JS-SDK 文档地址：http://mp.weixin.qq.com/wiki/7/aaa137b55fb2e0456bf8dd9148dd613f.html
- *
- * 如有问题请通过以下渠道反馈：
- * 邮箱地址：weixin-open@qq.com
- * 邮件主题：【微信JS-SDK反馈】具体问题
- * 邮件内容说明：用简明的语言描述问题所在，并交代清楚遇到该问题的场景，可附上截屏图片，微信团队会尽快处理你的反馈。
- */
+var gInfo = {}
 wx.ready(function() {
 
   wxSdkSuccess();
@@ -152,11 +142,49 @@ var listApply = new Vue({
 })
 
 function confirmDomino(index) {
-  $.confirm({
-    title: '',
-    text: '确认把书给 ' + listApply.items[index].nickName + '?选了就不能取消哦',
-    onOK: function() {
-      chooseDominoApplysWithOpenId(listApply.items[index].openId, getUrlParam('readid'))
+  if (gInfo.baseInfo.openid == gInfo.readInfo.openId) {
+    if (listApply.items[index].dominoStatusShow == '选择') {
+      $.confirm({
+        title: '',
+        text: '确认把书给"' + listApply.items[index].nickName + '"?选了就不能取消哦!',
+        onOK: function() {
+          chooseDominoApplysWithOpenId(listApply.items[index].openId, getUrlParam('readid'))
+        },
+      });
+    } else if (listApply.items[index].dominoStatusShow == '详细地址') {
+      showChosenApplyAddress(listApply.items[index].openId, getUrlParam('readid'))
+    }
+  }
+}
+
+function showChosenApplyAddress(openId, readId) {
+  $.ajax({
+    url: "../ajax/getChosenApplyAddressAjax?openId=" + openId + '&readId=' + readId,
+    type: "get",
+    contentType: "application/json",
+    success: function(result) {
+      rev = JSON.parse(result);
+      console.log(rev)
+      addressContent = '姓名:' + rev.userName + '<br>' + '邮编:' + rev.postalCode + '<br>' + rev.provinceName + ' ' + rev.cityName + ' ' + rev.countryName + ' ' + rev.detailInfo + '<br>电话:' + rev.telNumber
+      $.modal({
+        title: "复制地址",
+        text: addressContent,
+        buttons: [{
+          text: "取消",
+          className: "default",
+          onClick: function() {
+            console.log(2)
+          }
+        }, {
+          text: "确认",
+          onClick: function() {
+            console.log(3)
+          }
+        }, ]
+      });
+    },
+    error: function(xhr, status) {
+      alert(JSON.stringify(status));
     },
   });
 }
@@ -169,7 +197,9 @@ function chooseDominoApplysWithOpenId(openId, readId) {
     success: function(result) {
       rev = JSON.parse(result);
       console.log(rev)
-
+      if (rev.status == 'ok') {
+        window.location.href = updateUrl(window.location.href);
+      }
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));
@@ -191,7 +221,8 @@ function getDominoApplysWithReadId(readId) {
     contentType: "application/json",
     success: function(result) {
       rev = JSON.parse(result);
-      console.log(rev)
+      console.log('rev', rev)
+      gInfo = rev
       if (rev.readInfo) {
         book.bookInfo = htmlBookInfo(rev.readInfo)
       }
@@ -213,6 +244,20 @@ function getDominoApplysWithReadId(readId) {
             } else {
               tmpItem.aboutCity += '［未支付运费］'
             }
+          }
+          if (rev.applyList[i].dominoStatus == 'chosen') {
+            if (rev.baseInfo.openid == rev.readInfo.openId) {
+              tmpItem.dominoStatusShow = '详细地址'
+            } else {
+              tmpItem.dominoStatusShow = '已选中'
+            }
+            tmpItem.ftHtml = '<button class="weui-btn weui-btn_warn">' + tmpItem.dominoStatusShow + '</button>'
+          } else if (rev.applyList[i].dominoStatus == 'reject') {
+            tmpItem.dominoStatusShow = '未选中'
+            tmpItem.ftHtml = '<button class="weui-btn weui-weui-btn_disabled weui-btn_default">' + tmpItem.dominoStatusShow + '</button>'
+          } else if (rev.baseInfo.openid == rev.readInfo.openId) {
+            tmpItem.dominoStatusShow = '选择'
+            tmpItem.ftHtml = '<button class="weui-btn weui-btn_primary">' + tmpItem.dominoStatusShow + '</button>'
           }
           listApply.items.push(tmpItem)
         }
