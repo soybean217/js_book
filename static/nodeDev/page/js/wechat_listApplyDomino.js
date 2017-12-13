@@ -133,6 +133,8 @@ var listApply = new Vue({
   el: '#listApply',
   data: {
     items: [],
+    chosenTarget: false,
+    targetAddress: '',
   },
   methods: {
     select: function(event) {
@@ -141,6 +143,8 @@ var listApply = new Vue({
   }
 })
 
+new Clipboard('#copyAddress');
+
 function confirmDomino(index) {
   if (gInfo.baseInfo.openid == gInfo.readInfo.openId) {
     if (listApply.items[index].dominoStatusShow == '选择') {
@@ -148,11 +152,10 @@ function confirmDomino(index) {
         title: '',
         text: '确认把书给"' + listApply.items[index].nickName + '"?选了就不能取消哦!',
         onOK: function() {
+          console.log('confirmDomino')
           chooseDominoApplysWithOpenId(listApply.items[index].openId, getUrlParam('readid'))
         },
       });
-    } else if (listApply.items[index].dominoStatusShow == '详细地址') {
-      showChosenApplyAddress(listApply.items[index].openId, getUrlParam('readid'))
     }
   }
 }
@@ -164,24 +167,10 @@ function showChosenApplyAddress(openId, readId) {
     contentType: "application/json",
     success: function(result) {
       rev = JSON.parse(result);
-      console.log(rev)
-      addressContent = '姓名:' + rev.userName + '<br>' + '邮编:' + rev.postalCode + '<br>' + rev.provinceName + ' ' + rev.cityName + ' ' + rev.countryName + ' ' + rev.detailInfo + '<br>电话:' + rev.telNumber
-      $.modal({
-        title: "复制地址",
-        text: addressContent,
-        buttons: [{
-          text: "取消",
-          className: "default",
-          onClick: function() {
-            console.log(2)
-          }
-        }, {
-          text: "确认",
-          onClick: function() {
-            console.log(3)
-          }
-        }, ]
-      });
+      addressContent = '姓名:' + rev.userName + '\n' + '邮编:' + rev.postalCode + '\n' + rev.provinceName + ' ' + rev.cityName + ' ' + rev.countryName + ' ' + rev.detailInfo + '\n电话:' + rev.telNumber
+      listApply.chosenTarget = true
+      listApply.targetAddress = addressContent
+        // $('#taTargetAddress').val(addressContent)
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));
@@ -226,45 +215,51 @@ function getDominoApplysWithReadId(readId) {
       if (rev.readInfo) {
         book.bookInfo = htmlBookInfo(rev.readInfo)
       }
-      if (rev.applyList && rev.applyList.length > 0) {
-        var tmp = ''
-        for (i in rev.applyList) {
-          var tmpItem = {}
-          var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
-          tmpItem.img = rowImgUrl
-          tmpItem.nickName = rev.applyList[i].nickName
-          tmpItem.openId = rev.applyList[i].openId
-          if (rev.applyList[i].dominoMethod == 'byHand') {
-            tmpItem.method = '自取'
-          } else if (rev.applyList[i].dominoMethod == 'express') {
-            tmpItem.method = '快递'
-            tmpItem.aboutCity = '寄往' + rev.applyList[i].expressAddress.provinceName + rev.applyList[i].expressAddress.cityName
-            if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'payed') {
-              tmpItem.aboutCity += '［已支付运费' + rev.applyList[i].expressFee + '元］'
-            } else {
-              tmpItem.aboutCity += '［未支付运费］'
-            }
-          }
-          if (rev.applyList[i].dominoStatus == 'chosen') {
-            if (rev.baseInfo.openid == rev.readInfo.openId) {
-              tmpItem.dominoStatusShow = '详细地址'
-            } else {
-              tmpItem.dominoStatusShow = '已选中'
-            }
-            tmpItem.ftHtml = '<button class="weui-btn weui-btn_warn">' + tmpItem.dominoStatusShow + '</button>'
-          } else if (rev.applyList[i].dominoStatus == 'reject') {
-            tmpItem.dominoStatusShow = '未选中'
-            tmpItem.ftHtml = '<button class="weui-btn weui-weui-btn_disabled weui-btn_default">' + tmpItem.dominoStatusShow + '</button>'
-          } else if (rev.baseInfo.openid == rev.readInfo.openId) {
-            tmpItem.dominoStatusShow = '选择'
-            tmpItem.ftHtml = '<button class="weui-btn weui-btn_primary">' + tmpItem.dominoStatusShow + '</button>'
-          }
-          listApply.items.push(tmpItem)
-        }
+      procApplyListData(rev)
+      if (rev.applyList[0].dominoStatus == "chosen" && rev.baseInfo.openid == rev.readInfo.openId) {
+        showChosenApplyAddress(rev.applyList[0].openId, getUrlParam('readid'))
       }
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));
     },
   });
+}
+
+function procApplyListData(rev) {
+  if (rev.applyList && rev.applyList.length > 0) {
+    for (i in rev.applyList) {
+      var tmpItem = {}
+      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
+      tmpItem.img = rowImgUrl
+      tmpItem.nickName = rev.applyList[i].nickName
+      tmpItem.openId = rev.applyList[i].openId
+      if (rev.applyList[i].dominoMethod == 'byHand') {
+        tmpItem.method = '自取'
+      } else if (rev.applyList[i].dominoMethod == 'express') {
+        tmpItem.method = '快递'
+        tmpItem.aboutCity = '寄往' + rev.applyList[i].expressAddress.provinceName + rev.applyList[i].expressAddress.cityName
+        if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'payed') {
+          tmpItem.aboutCity += '［已支付运费' + rev.applyList[i].expressFee + '元］'
+        } else {
+          tmpItem.aboutCity += '［未支付运费］'
+        }
+      }
+      if (rev.applyList[i].dominoStatus == 'chosen') {
+        if (rev.baseInfo.openid == rev.readInfo.openId) {
+          tmpItem.dominoStatusShow = '已选中'
+        } else {
+          tmpItem.dominoStatusShow = '已选中'
+        }
+        tmpItem.ftHtml = '<button class="weui-btn weui-btn_warn">' + tmpItem.dominoStatusShow + '</button>'
+      } else if (rev.applyList[i].dominoStatus == 'reject') {
+        tmpItem.dominoStatusShow = '未选中'
+        tmpItem.ftHtml = '<button class="weui-btn weui-weui-btn_disabled weui-btn_default">' + tmpItem.dominoStatusShow + '</button>'
+      } else if (rev.baseInfo.openid == rev.readInfo.openId) {
+        tmpItem.dominoStatusShow = '选择'
+        tmpItem.ftHtml = '<button class="weui-btn weui-btn_primary">' + tmpItem.dominoStatusShow + '</button>'
+      }
+      listApply.items.push(tmpItem)
+    }
+  }
 }

@@ -19,6 +19,10 @@
 				<div class="weui-cells" id="book" v-html="bookInfo">
 				</div>
 				<div class="weui-cells" id='listApply'>
+					<div class="weui-cell" v-if='chosenTarget'>
+						<textarea rows="5" class="weui-textarea" id="taTargetAddress" v-model="targetAddress" readonly></textarea>
+						<button class="weui-btn weui-btn_mini weui-btn_primary" id='copyAddress' data-clipboard-target="#taTargetAddress">复制</button>
+					</div>
 					<div class="weui-cell" v-for="(item,index) in items" :key='item.openId' v-on:click='select(index)'>
 						<div class="weui-cell__hd">
 							<img :src="item.img">
