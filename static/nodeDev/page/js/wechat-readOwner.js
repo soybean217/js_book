@@ -247,7 +247,7 @@ function getReadInfoWithId(id) {
         vueRadioDomino.toggle = readInfo[0].openDomino
         vueRadioDomino.seen = true
         if (readInfo[0].openDomino) {
-          showBookAddress(JSON.parse(readInfo[0].bookAddress))
+          showBookAddress(readInfo[0].bookAddress)
           getDominoApplysWithReadId(id)
         }
       }
@@ -261,8 +261,9 @@ function getReadInfoWithId(id) {
 var dominoApplyInfo = new Vue({
   el: '#dominoApplyInfo',
   data: {
-    innerHtml: '',
+    innerIngHtml: '',
     seen: false,
+    domino_ing: false,
   },
 })
 
@@ -272,18 +273,23 @@ function getDominoApplysWithReadId(readId) {
     type: "get",
     contentType: "application/json",
     success: function(result) {
-      console.log(result)
       rev = JSON.parse(result);
+      console.log(rev)
       if (rev.applyList && rev.applyList.length > 0) {
-        var tmp = ''
-        for (i in rev.applyList) {
-          var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
-          tmp += '<img src="' + rowImgUrl + '">'
+        if (rev.readInfo.dominoOpenId && rev.readInfo.dominoOpenId.length > 4) {
+          dominoApplyInfo.dominoChosenImg = rev.applyList[0].headImgUrl.substr(0, rev.applyList[0].headImgUrl.length - 2) + '/46'
+          dominoApplyInfo.dominoChosenName = rev.applyList[0].nickName
+        } else {
+          var tmp = ''
+          for (i in rev.applyList) {
+            var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
+            tmp += '<img src="' + rowImgUrl + '">'
+          }
+          dominoApplyInfo.innerIngHtml = tmp
+          dominoApplyInfo.domino_ing = true
         }
         dominoApplyInfo.dominoApplyCount = rev.applyList.length
-        dominoApplyInfo.innerHtml = tmp
         dominoApplyInfo.seen = true
-        console.log(dominoApplyInfo.innerHtml)
       }
     },
     error: function(xhr, status) {

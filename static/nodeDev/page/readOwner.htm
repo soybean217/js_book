@@ -31,9 +31,15 @@
 						</div>
 					</div>
 					<div id="dominoApplyInfo" v-if='seen' onclick="goPageListApply()">
-						<div  class="weui-cell" >正在申请接龙的用户共 {{dominoApplyCount}} 人
+						<div  class="weui-cell" >申请接龙的用户共 {{dominoApplyCount}} 人
 						</div>
-						<div  class="weui-cell" v-html="innerHtml">
+						<div  class="weui-cell" v-if="domino_ing" v-html="innerIngHtml">
+						</div>
+						<div  class="weui-cell" v-else >
+							<div class="weui-cell__hd">
+								<img :src="dominoChosenImg">
+							</div>
+							<div class="weui-cell__bd">接龙给：{{dominoChosenName}}</div>
 						</div>
 					</div>
 				</div>

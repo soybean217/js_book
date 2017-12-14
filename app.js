@@ -664,6 +664,7 @@ function getReadInfoWithIdAjax(req, res) {
 			logger.error(err);
 		} else {
 			if (rows.length > 0) {
+				hideClearBookAddress(rows[0])
 				return succ(rows)
 			} else {
 				logger.warn(tag + ' record is not exist . ' + req.url)
@@ -681,6 +682,19 @@ function getReadInfoWithIdAjax(req, res) {
 		return res.send('{"status":"error"}')
 	}
 
+}
+
+function hideClearBookAddress(info) {
+	if (info.bookAddress && info.bookAddress.length > 6) {
+		var addressInfo = JSON.parse(info.bookAddress)
+		if (addressInfo.provinceName && addressInfo.cityName && addressInfo.countryName) {
+			info.bookAddress = {
+				provinceName: addressInfo.provinceName,
+				cityName: addressInfo.cityName,
+				countryName: addressInfo.countryName,
+			}
+		}
+	}
 }
 
 function getDominoApplyListWithReadIdAjax(req, res) {
@@ -704,6 +718,7 @@ function getDominoApplyListWithReadIdAjax(req, res) {
 						}
 					}
 				}
+				hideClearBookAddress(readInfo)
 				var rsp = {
 					readInfo: readInfo,
 					applyList: rows,
