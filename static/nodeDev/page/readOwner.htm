@@ -18,11 +18,14 @@
 					<div id='vue-radio-1'>
 						<div class="weui-cell weui-cell_switch" v-if="seen">
 							<div class="weui-cell__bd">看完免费分享给好友(读书接龙)</div>
-							<div class="weui-cell__ft">
+							<div class="weui-cell__ft" v-if="radioSeen">
 								<label for="switchCP" class="weui-switch-cp">
 									<input id="switchCP" class="weui-switch-cp__input" type="checkbox" checked="checked"  v-model.lazy="toggle"  v-bind:true-value="cTrue"  v-bind:false-value="cFalse"/>
 									<div class="weui-switch-cp__box"></div>
 								</label>
+							</div>
+							<div class="weui-cell__ft" v-else>
+								已分享
 							</div>
 						</div>
 					</div>
@@ -73,7 +76,7 @@
 		<div class="weui-mask"></div>
 		<div class="weui-dialog">
 			<div class="weui-dialog__hd"><strong class="weui-dialog__title">地址</strong></div>
-			<div class="weui-dialog__bd">确认将选择本实体书所在的地址。</div>
+			<div class="weui-dialog__bd">确认将选择本实体书所在的地址。<br>一旦打开接龙将不能关闭。</div>
 			<div class="weui-dialog__ft">
 				<a href="javascript:shareBookCancel();" class="weui-dialog__btn weui-dialog__btn_default">取消</a>
 				<a href="javascript:editBookAddress();" class="weui-dialog__btn weui-dialog__btn_primary">确认</a>

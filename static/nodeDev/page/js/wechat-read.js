@@ -107,7 +107,7 @@ function getReadInfoWithId(id) {
 			if (readInfo.length > 0) {
 				if (readInfo[0].openDomino) {
 					openDominoState.readOwnerInfo = readInfo[0].nickName + ' 看完将分享这本实体书'
-					showBookAddress(JSON.parse(readInfo[0].bookAddress))
+					showBookAddress(readInfo[0].bookAddress)
 				}
 			}
 		},
