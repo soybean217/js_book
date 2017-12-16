@@ -217,6 +217,7 @@ function syncRadioStatusWithReadId(id, address) {
 		success: function(result) {
 			if (vueRadioDomino.toggle) {
 				showBookAddress(address)
+				vueRadioDomino.radioSeen = false
 			} else {
 				addressInfo.seen = false
 			}
