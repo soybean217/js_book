@@ -161,11 +161,11 @@ app.use(function(req, res, next) {
 				var rev = JSON.parse(body);
 				logger.debug('baseinfo', rev)
 				if (rev.openid) {
-					// async update user info to db
+					req.session.wechatBase = rev
 					insertOrUpdateWechatUser(rev, CONFIG.WECHAT.APPID);
 					// logger.debug(rev);
 					// can trace f parameter (from openid) here , and replace it here if you need .
-					req.session.wechatBase = rev
+
 					if (rev.scope == 'snsapi_userinfo') {
 						oAuthUserInfo();
 					} else {
@@ -189,6 +189,7 @@ app.use(function(req, res, next) {
 					req.session.userInfoFromDb = rowRs[0];
 					//if no response any more . need save .
 					req.session.save(null)
+					req.session.wechatBase.subscribe_time = rowRs[0].subscribeTime
 					poolConfig.query("update tbl_wechat_users set lastLoginTime=?,unionId=? where openId=?  ", [ctimeSecond, wechatBase.unionid, wechatBase.openid], function(err, rows, fields) {
 						if (err) {
 							logger.error(err);
@@ -230,7 +231,7 @@ app.use(function(req, res, next) {
 			});
 			response.on('end', function() {
 				var rev = JSON.parse(body);
-				logger.debug('baseinfo', rev);
+				logger.debug('fetch baseinfo', rev);
 				if (rev.subscribe_time) {
 					req.session.userInfoFromDb = {
 						subscribeTime: rev.subscribe_time,
@@ -722,15 +723,67 @@ function getDominoApplyListWithReadIdAjax(req, res) {
 				var rsp = {
 					readInfo: readInfo,
 					applyList: rows,
-					baseInfo: {
-						openid: req.session.wechatBase.openid,
-						unionid: req.session.wechatBase.unionid,
-					}
+					baseInfo: getBaseInfoToClient(req),
 				}
 				logger.debug('req.session.wechatBase', req.session.wechatBase)
 				return succ(rsp)
 			}
 		});
+	}
+
+
+	function succ(rows) {
+		res.send(JSON.stringify(rows))
+		res.end()
+	}
+
+	function fail() {
+		return res.send('{"status":"error"}')
+	}
+
+}
+
+function getBaseInfoToClient(req) {
+	return {
+		openid: req.session.wechatBase.openid,
+		unionid: req.session.wechatBase.unionid,
+		subscribe_time: (req.session.userInfoFromDb && req.session.userInfoFromDb.subscribeTime > 0) ? req.session.userInfoFromDb.subscribeTime : 0,
+	}
+}
+
+function getApplyListAjax(req, res) {
+
+	function getApplyList() {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_reads on tbl_apply_dominos.readId=tbl_reads.id join tbl_books on tbl_books.id = tbl_reads.bookId WHERE tbl_apply_dominos.openid  = ? order by dominoStatus", [req.session.wechatBase.openid], function(err, rows, fields) {
+			if (err) {
+				logger.error(err);
+				fail()
+			} else {
+				for (var i in rows) {
+					if (rows[i].expressAddress && rows[i].expressAddress.length > 6) {
+						var addressInfo = JSON.parse(rows[i].expressAddress)
+						if (addressInfo.provinceName && addressInfo.cityName) {
+							rows[i].expressAddress = {
+								provinceName: addressInfo.provinceName,
+								cityName: addressInfo.cityName,
+							}
+						}
+					}
+				}
+				var rsp = {
+					applyList: rows,
+					baseInfo: getBaseInfoToClient(req),
+				}
+				logger.debug('req.session.wechatBase', req.session.wechatBase)
+				return succ(rsp)
+			}
+		});
+	}
+
+	if (req.session.wechatBase) {
+		getApplyList()
+	} else {
+		fail()
 	}
 
 
@@ -935,7 +988,7 @@ function cancelDominoAjax(req, res) {
 	}
 }
 
-var WXPay = require('weixin-pay');
+var WXPay = require('co-weixin-pay');
 var wxpay = WXPay({
 	appid: CONFIG.WECHAT.APPID,
 	mch_id: CONFIG.WXPAY.MCH_ID,
@@ -1263,33 +1316,34 @@ function picUploadAjax(req, res) {
 				var tmpFileName = "./tmp/" + mediaId + ".jpg"
 				fs.writeFile(tmpFileName, body, "binary", function(err) {
 					if (err) {
-						logger.error(url);
-						logger.error("down fail");
+						logger.error("down fail", url);
 						return
 					}
 					//todo md5相关验证和碰撞处理
-					var cos = new COS({
+					var paramsForCos = {
 						AppId: CONFIG.QCLOUD_PARA.AppId,
 						SecretId: CONFIG.QCLOUD_PARA.SecretId,
 						SecretKey: CONFIG.QCLOUD_PARA.SecretKey,
-					});
+					}
+					logger.debug('paramsForCos', paramsForCos)
+					var cos = new COS(paramsForCos);
 					// 分片上传
 					var keyFileNameWithTime = ctime.getFullYear() + '/' + (ctime.getMonth() + 1) + '/' + ctime.getDate() + '/' + req.session.wechatBase.openid + '-' + mediaId + '.jpg'
-					cos.sliceUploadFile({
+					var paramsForUpload = {
 						Bucket: CONFIG.QCLOUD_PARA.COS.Bucket,
 						Region: CONFIG.QCLOUD_PARA.COS.Region,
 						Key: keyFileNameWithTime,
 						FilePath: tmpFileName
-					}, function(err, data) {
+					}
+					logger.debug('paramsForUpload', paramsForUpload)
+					cos.sliceUploadFile(paramsForUpload, function(err, data) {
 						if (err) {
-							logger.error(err, data);
-							logger.error(err);
+							logger.error('cos.sliceUploadFile', err);
 						} else {
 							//delete tmp file
 							fs.unlink(tmpFileName, (err) => {
 								if (err) {
-									logger.error(err);
-									logger.error(err);
+									logger.error('fs.unlink', err);
 								}
 								successUploadCount++
 								successUploadBytes += body.length
@@ -1395,6 +1449,7 @@ app.get(CONFIG.DIR_FIRST + '/ajax/listReadAjax', listReadAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getReadInfoWithIdAjax', getReadInfoWithIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getDominoApplyListWithReadIdAjax', getDominoApplyListWithReadIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getApplyDominoInfoWithReadIdAjax', getApplyDominoInfoWithReadIdAjax);
+app.get(CONFIG.DIR_FIRST + '/ajax/getApplyListAjax', getApplyListAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/chooseDominoApplysWithOpenIdAjax', chooseDominoApplysWithOpenIdAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/getChosenApplyAddressAjax', getChosenApplyAddressAjax);
 app.get(CONFIG.DIR_FIRST + '/ajax/cancelDominoAjax', cancelDominoAjax);

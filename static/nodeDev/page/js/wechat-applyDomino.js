@@ -165,7 +165,8 @@ function getApplyDominoInfoWithReadId(id) {
 		contentType: "application/json",
 		success: function(result) {
 			info = JSON.parse(result);
-			// $('#loadingToast').css("display", "none")
+			console.log('getApplyDominoInfoWithReadId', info)
+				// $('#loadingToast').css("display", "none")
 			if (info.length > 0) {
 				book.bookInfo = htmlBookInfo(info[0])
 				bookAddress = JSON.parse(info[0].bookAddress)
