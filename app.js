@@ -754,21 +754,13 @@ function getBaseInfoToClient(req) {
 function getApplyListAjax(req, res) {
 
 	function getApplyList() {
-		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_reads on tbl_apply_dominos.readId=tbl_reads.id join tbl_books on tbl_books.id = tbl_reads.bookId WHERE tbl_apply_dominos.openid  = ? order by dominoStatus", [req.session.wechatBase.openid], function(err, rows, fields) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_reads on tbl_apply_dominos.readId=tbl_reads.id join tbl_books on tbl_books.id = tbl_reads.bookId join tbl_wechat_users on tbl_reads.openId=tbl_wechat_users.openid WHERE tbl_apply_dominos.openid  = ? order by dominoStatus", [req.session.wechatBase.openid], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
 				fail()
 			} else {
 				for (var i in rows) {
-					if (rows[i].expressAddress && rows[i].expressAddress.length > 6) {
-						var addressInfo = JSON.parse(rows[i].expressAddress)
-						if (addressInfo.provinceName && addressInfo.cityName) {
-							rows[i].expressAddress = {
-								provinceName: addressInfo.provinceName,
-								cityName: addressInfo.cityName,
-							}
-						}
-					}
+					hideClearBookAddress(rows[i])
 				}
 				var rsp = {
 					applyList: rows,
@@ -1290,7 +1282,7 @@ function sessionTest(req, res) {
 	res.end()
 }
 
-var COS = require('cos-nodejs-sdk-v5');
+
 
 function picUploadAjax(req, res) {
 	if (!req.body) return res.sendStatus(400)
@@ -1316,7 +1308,7 @@ function picUploadAjax(req, res) {
 				var tmpFileName = "./tmp/" + mediaId + ".jpg"
 				fs.writeFile(tmpFileName, body, "binary", function(err) {
 					if (err) {
-						logger.error("down fail", url);
+						logger.error("write fail", url);
 						return
 					}
 					//todo md5相关验证和碰撞处理
@@ -1326,6 +1318,7 @@ function picUploadAjax(req, res) {
 						SecretKey: CONFIG.QCLOUD_PARA.SecretKey,
 					}
 					logger.debug('paramsForCos', paramsForCos)
+					var COS = require('cos-nodejs-sdk-v5');
 					var cos = new COS(paramsForCos);
 					// 分片上传
 					var keyFileNameWithTime = ctime.getFullYear() + '/' + (ctime.getMonth() + 1) + '/' + ctime.getDate() + '/' + req.session.wechatBase.openid + '-' + mediaId + '.jpg'
@@ -1337,8 +1330,9 @@ function picUploadAjax(req, res) {
 					}
 					logger.debug('paramsForUpload', paramsForUpload)
 					cos.sliceUploadFile(paramsForUpload, function(err, data) {
+						logger.debug(arguments)
 						if (err) {
-							logger.error('cos.sliceUploadFile', err);
+							logger.error('cos.sliceUploadFile', arguments);
 						} else {
 							//delete tmp file
 							fs.unlink(tmpFileName, (err) => {

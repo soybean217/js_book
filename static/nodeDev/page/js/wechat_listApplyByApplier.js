@@ -61,13 +61,14 @@ var listApply = new Vue({
   },
   methods: {
     select: function(event) {
-      confirmDomino(event)
+      gotoDomino(event)
     }
   }
 })
 
-new Clipboard('#copyAddress');
-
+function gotoDomino(index) {
+  location = 'applyDomino.htm?readid=' + listApply.items[index].readId
+}
 
 function getApplyList() {
   $.ajax({
@@ -78,13 +79,7 @@ function getApplyList() {
       rev = JSON.parse(result);
       console.log('rev', rev)
       gInfo = rev
-      if (rev.readInfo) {
-        book.bookInfo = htmlBookInfo(rev.readInfo)
-      }
       procApplyListData(rev)
-      if (rev.applyList[0].dominoStatus == "chosen" && rev.baseInfo.openid == rev.readInfo.openId) {
-        showChosenApplyAddress(rev.applyList[0].openId, getUrlParam('readid'))
-      }
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));
@@ -97,33 +92,31 @@ function procApplyListData(rev) {
     for (i in rev.applyList) {
       var tmpItem = {}
       var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
-      tmpItem.img = rowImgUrl
+      tmpItem.headImgUrl = rowImgUrl
       tmpItem.nickName = rev.applyList[i].nickName
+      tmpItem.bookName = rev.applyList[i].bookName
       tmpItem.openId = rev.applyList[i].openId
+      tmpItem.readId = rev.applyList[i].readId
       if (rev.applyList[i].dominoMethod == 'byHand') {
         tmpItem.method = '自取'
       } else if (rev.applyList[i].dominoMethod == 'express') {
         tmpItem.method = '快递'
-        tmpItem.aboutCity = '寄往' + rev.applyList[i].expressAddress.provinceName + rev.applyList[i].expressAddress.cityName
+        tmpItem.aboutCity = ''
         if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'payed') {
           tmpItem.aboutCity += '［已支付运费' + rev.applyList[i].expressFee + '元］'
+        } else if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'refund') {
+          tmpItem.aboutCity += '［已退回运费］'
         } else {
           tmpItem.aboutCity += '［未支付运费］'
         }
       }
+      tmpItem.cover = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rev.applyList[i].cover + '?imageView2/2/w/50'
       if (rev.applyList[i].dominoStatus == 'chosen') {
-        if (rev.baseInfo.openid == rev.readInfo.openId) {
-          tmpItem.dominoStatusShow = '已选中'
-        } else {
-          tmpItem.dominoStatusShow = '已选中'
-        }
-        tmpItem.ftHtml = '<button class="weui-btn weui-btn_warn">' + tmpItem.dominoStatusShow + '</button>'
+        tmpItem.dominoStatusShow = '(确认分享给您)'
       } else if (rev.applyList[i].dominoStatus == 'reject') {
-        tmpItem.dominoStatusShow = '未选中'
-        tmpItem.ftHtml = '<button class="weui-btn weui-weui-btn_disabled weui-btn_default">' + tmpItem.dominoStatusShow + '</button>'
-      } else if (rev.baseInfo.openid == rev.readInfo.openId) {
-        tmpItem.dominoStatusShow = '选择'
-        tmpItem.ftHtml = '<button class="weui-btn weui-btn_primary">' + tmpItem.dominoStatusShow + '</button>'
+        tmpItem.dominoStatusShow = '(已分享给别人)'
+      } else {
+        tmpItem.dominoStatusShow = '(还未决定分享给谁)'
       }
       listApply.items.push(tmpItem)
     }

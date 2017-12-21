@@ -10,7 +10,6 @@
 	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
 	<link rel="stylesheet" href="https://cdn.bootcss.com/jquery-weui/1.2.0/css/jquery-weui.min.css">
 	<script src="https://cdn.bootcss.com/vue/2.4.4/vue.js"></script>
-	<script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/1.7.1/clipboard.min.js"></script>
 </head>
 <body ontouchstart="">
 	<div class="container" id="container">
@@ -19,12 +18,13 @@
 				<div class="weui-cells" id='listApply'>
 					<div class="weui-cell" v-for="(item,index) in items" :key='item.openId' v-on:click='select(index)'>
 						<div class="weui-cell__hd">
-							<img :src="item.img">
+							<img :src="item.headImgUrl">
 						</div>
 						<div class="weui-cell__bd">
-							<p>{{item.nickName}}({{item.method}}){{item.aboutCity}}</p>
+							<p>{{item.nickName}} 分享的《{{item.bookName}}》。{{item.method}}{{item.aboutCity}}{{item.dominoStatusShow}}</p>
 						</div>
-						<div class="weui-cell__ft" v-html="item.ftHtml">
+						<div class="weui-cell__ft">
+							<img :src="item.cover">
 						</div>
 					</div>
 				</div>
