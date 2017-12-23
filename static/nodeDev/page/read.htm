@@ -21,8 +21,20 @@
 						</div>
 						<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
 						</div>
-						<div class="weui-cells__title">
+						<div class="weui-cells__title" v-if='applyButtonSeen'>
 							<a href="javascript:applyDomino();" class="weui-btn weui-btn_primary">申请接龙读这本实体书</a>
+						</div>
+					</div>
+					<div id="dominoApplyInfo" v-if='seen'>
+						<div  class="weui-cell" >申请接龙的用户共 {{dominoApplyCount}} 人
+						</div>
+						<div  class="weui-cell" v-if="domino_ing" v-html="innerIngHtml">
+						</div>
+						<div  class="weui-cell" v-else >
+							<div class="weui-cell__hd">
+								<img :src="dominoChosenImg">
+							</div>
+							<div class="weui-cell__bd">看完接龙给：{{dominoChosenName}}</div>
 						</div>
 					</div>
 				</div>

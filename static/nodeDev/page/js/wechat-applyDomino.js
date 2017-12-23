@@ -164,10 +164,11 @@ function getApplyDominoInfoWithReadId(id) {
 		type: "get",
 		contentType: "application/json",
 		success: function(result) {
-			info = JSON.parse(result);
-			console.log('getApplyDominoInfoWithReadId', info)
+			rev = JSON.parse(result);
+			console.log('getApplyDominoInfoWithReadId', rev)
+			info = rev.applyList
 				// $('#loadingToast').css("display", "none")
-			if (info.length > 0) {
+			if (rev.applyList && rev.applyList.length > 0) {
 				book.bookInfo = htmlBookInfo(info[0])
 				bookAddress = JSON.parse(info[0].bookAddress)
 				dominoInfo.bookAddressInfo = '书籍所在地：' +

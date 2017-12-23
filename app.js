@@ -472,12 +472,13 @@ function editNote(req, res) {
 		var i = 0
 		var imgUrl = ''
 		rows[0].pics.split(',').forEach(function(row) {
-			if (i == 0) {
-				imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row + '?imageView2/1/w/50'
-			}
+			// if (i == 0) {
+			// 	imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row + '?imageView2/1/w/50'
+			// }
 			i++
 			imgHtml += '<img src="' + CONFIG.QCLOUD_PARA.BUCKET_DOMAIN + row + '">'
 		})
+		imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rows[0].cover + '?imageView2/1/w/50'
 		var bookHtml = ''
 		if (htmlFile == 'viewNote.htm') {
 			bookHtml = '<a href="read?id=' + rows[0].readId + '">' + bookViewHtml(rows[0]) + '<div class="weui-cell"><div class="weui-cell__bd"><span id="spanNote">查看 ' + rows[0].nickName + ' 更多本书笔记...</span></div></div></a>'
@@ -798,15 +799,19 @@ function getApplyDominoInfoWithReadIdAjax(req, res) {
 				logger.error(err);
 				return fail()
 			} else {
-				return succ(rows)
+				var rsp = {
+					applyList: rows,
+					baseInfo: getBaseInfoToClient(req),
+				}
+				return succ(rsp)
 			}
 		});
 	} else {
 		return fail()
 	}
 
-	function succ(rows) {
-		res.send(JSON.stringify(rows))
+	function succ(rsp) {
+		res.send(JSON.stringify(rsp))
 		res.end()
 	}
 
@@ -1282,7 +1287,7 @@ function sessionTest(req, res) {
 	res.end()
 }
 
-
+var COS = require('cos-nodejs-sdk-v5');
 
 function picUploadAjax(req, res) {
 	if (!req.body) return res.sendStatus(400)
@@ -1318,7 +1323,6 @@ function picUploadAjax(req, res) {
 						SecretKey: CONFIG.QCLOUD_PARA.SecretKey,
 					}
 					logger.debug('paramsForCos', paramsForCos)
-					var COS = require('cos-nodejs-sdk-v5');
 					var cos = new COS(paramsForCos);
 					// 分片上传
 					var keyFileNameWithTime = ctime.getFullYear() + '/' + (ctime.getMonth() + 1) + '/' + ctime.getDate() + '/' + req.session.wechatBase.openid + '-' + mediaId + '.jpg'

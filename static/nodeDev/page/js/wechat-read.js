@@ -84,6 +84,15 @@ var openDominoState = new Vue({
 		bookAddressInfo: '',
 		readOwnerInfo: '',
 		seen: false,
+		applyButtonSeen: false,
+	},
+})
+var dominoApplyInfo = new Vue({
+	el: '#dominoApplyInfo',
+	data: {
+		innerIngHtml: '',
+		seen: false,
+		domino_ing: false,
 	},
 })
 
@@ -104,11 +113,46 @@ function getReadInfoWithId(id) {
 		contentType: "application/json",
 		success: function(result) {
 			readInfo = JSON.parse(result);
+			if (!(readInfo[0].dominoOpenId && readInfo[0].dominoOpenId.length > 4)) {
+				openDominoState.applyButtonSeen = true
+			}
 			if (readInfo.length > 0) {
 				if (readInfo[0].openDomino) {
 					openDominoState.readOwnerInfo = readInfo[0].nickName + ' 看完将分享这本实体书'
 					showBookAddress(readInfo[0].bookAddress)
+					getDominoApplysWithReadId(id)
 				}
+			}
+		},
+		error: function(xhr, status) {
+			alert(JSON.stringify(status));
+		},
+	});
+}
+
+function getDominoApplysWithReadId(readId) {
+	$.ajax({
+		url: "../ajax/getDominoApplyListWithReadIdAjax?readId=" + readId,
+		type: "get",
+		contentType: "application/json",
+		success: function(result) {
+			rev = JSON.parse(result);
+			console.log(rev)
+			if (rev.applyList && rev.applyList.length > 0) {
+				if (rev.readInfo.dominoOpenId && rev.readInfo.dominoOpenId.length > 4) {
+					dominoApplyInfo.dominoChosenImg = rev.applyList[0].headImgUrl.substr(0, rev.applyList[0].headImgUrl.length - 2) + '/46'
+					dominoApplyInfo.dominoChosenName = rev.applyList[0].nickName
+				} else {
+					var tmp = ''
+					for (i in rev.applyList) {
+						var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
+						tmp += '<img src="' + rowImgUrl + '">'
+					}
+					dominoApplyInfo.innerIngHtml = tmp
+					dominoApplyInfo.domino_ing = true
+				}
+				dominoApplyInfo.dominoApplyCount = rev.applyList.length
+				dominoApplyInfo.seen = true
 			}
 		},
 		error: function(xhr, status) {
