@@ -1271,7 +1271,7 @@ function signOut(req, res) {
 		"Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
 		"Expires": "-1",
 	})
-	var result = 'var sign = ' + JSON.stringify(sign(globalInfo.jsapiTicket.value, req.header('Referer')));
+	var result = 'var sign = ' + JSON.stringify(sign(globalInfo.jsapiTicket.value, req.header('Referer'))) + ';wx.config({debug : sign.debug,appId :sign.appId,timestamp :sign.timestamp,nonceStr :sign.nonceStr,signature :sign.signature,		jsApiList : [ "checkJsApi", "onMenuShareTimeline","onMenuShareAppMessage", "onMenuShareQQ", "onMenuShareWeibo",				"onMenuShareQZone", "hideMenuItems", "showMenuItems",				"hideAllNonBaseMenuItem", "showAllNonBaseMenuItem",				"translateVoice", "startRecord", "stopRecord",				"onVoiceRecordEnd", "playVoice", "onVoicePlayEnd",				"pauseVoice", "stopVoice", "uploadVoice", "downloadVoice",				"chooseImage", "previewImage", "uploadImage", "downloadImage",				"getNetworkType", "openLocation", "getLocation",				"hideOptionMenu", "showOptionMenu", "closeWindow",				"scanQRCode", "chooseWXPay", "openProductSpecificView",	"addCard", "chooseCard", "openCard" ]})';
 	res.send(result);
 }
 
@@ -1326,14 +1326,42 @@ function picUploadAjax(req, res) {
 					var cos = new COS(paramsForCos);
 					// 分片上传
 					var keyFileNameWithTime = ctime.getFullYear() + '/' + (ctime.getMonth() + 1) + '/' + ctime.getDate() + '/' + req.session.wechatBase.openid + '-' + mediaId + '.jpg'
+						// var paramsForUpload = {
+						// 	Bucket: CONFIG.QCLOUD_PARA.COS.Bucket,
+						// 	Region: CONFIG.QCLOUD_PARA.COS.Region,
+						// 	Key: keyFileNameWithTime,
+						// 	FilePath: tmpFileName
+						// }
+						// logger.debug('paramsForUpload', paramsForUpload)
+						// cos.sliceUploadFile(paramsForUpload, function(err, data) {
+						// 	logger.debug(arguments)
+						// 	if (err) {
+						// 		logger.error('cos.sliceUploadFile', arguments);
+						// 	} else {
+						// 		//delete tmp file
+						// 		fs.unlink(tmpFileName, (err) => {
+						// 			if (err) {
+						// 				logger.error('fs.unlink', err);
+						// 			}
+						// 			successUploadCount++
+						// 			successUploadBytes += body.length
+						// 			keyNames.push(keyFileNameWithTime)
+						// 			if (successUploadCount == req.body.serverId.length) {
+						// 				processCmd()
+						// 			}
+						// 		});
+						// 	}
+						// });
 					var paramsForUpload = {
 						Bucket: CONFIG.QCLOUD_PARA.COS.Bucket,
 						Region: CONFIG.QCLOUD_PARA.COS.Region,
 						Key: keyFileNameWithTime,
-						FilePath: tmpFileName
+						// FilePath: tmpFileName,
+						// Body: fs.readFileSync(tmpFileName),
+						Body: fs.createReadStream(tmpFileName),
+						ContentLength: fs.statSync(tmpFileName).size
 					}
-					logger.debug('paramsForUpload', paramsForUpload)
-					cos.sliceUploadFile(paramsForUpload, function(err, data) {
+					cos.putObject(paramsForUpload, function(err, data) {
 						logger.debug(arguments)
 						if (err) {
 							logger.error('cos.sliceUploadFile', arguments);

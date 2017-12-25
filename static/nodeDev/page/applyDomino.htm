@@ -1,6 +1,5 @@
 <html>
 	<head>
-		<script src="signWechat.js"></script>
 		<meta charset="utf-8">
 		<title>读书接龙</title>
 		<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
@@ -88,33 +87,11 @@
 	<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
 	<script>
 		var imgUrl = '{{imgUrl}}';
-		wx.config({
-			debug : sign.debug,
-			appId :sign.appId
-		,
-			timestamp :sign.timestamp
-		,
-			nonceStr :sign.nonceStr
-		,
-			signature :sign.signature
-		,
-			jsApiList : [ 'checkJsApi', 'onMenuShareTimeline',
-					'onMenuShareAppMessage', 'onMenuShareQQ', 'onMenuShareWeibo',
-					'onMenuShareQZone', 'hideMenuItems', 'showMenuItems',
-					'hideAllNonBaseMenuItem', 'showAllNonBaseMenuItem',
-					'translateVoice', 'startRecord', 'stopRecord',
-					'onVoiceRecordEnd', 'playVoice', 'onVoicePlayEnd',
-					'pauseVoice', 'stopVoice', 'uploadVoice', 'downloadVoice',
-					'chooseImage', 'previewImage', 'uploadImage', 'downloadImage',
-					'getNetworkType', 'openLocation', 'getLocation',
-					'hideOptionMenu', 'showOptionMenu', 'closeWindow',
-					'scanQRCode', 'chooseWXPay', 'openProductSpecificView',
-					'addCard', 'chooseCard', 'openCard' ]
-		});
 	</script>
 	<!-- <script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script> -->
 	<script src="https://cdn.bootcss.com/jquery/1.11.0/jquery.min.js"></script>
 	<script src="https://cdn.bootcss.com/jquery-weui/1.2.0/js/jquery-weui.min.js"></script>
+	<script src="signWechat.js"></script>
 	<script src="js/private-util.js"></script>
 	<script src="js/wechat-applyDomino.js"></script>
 </html>
