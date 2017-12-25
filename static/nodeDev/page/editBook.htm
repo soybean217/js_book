@@ -1,58 +1,55 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>编辑</title>
-		<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
-		<META HTTP-EQUIV="pragma" CONTENT="no-cache">
-		<META HTTP-EQUIV="expires" CONTENT="0">
-		<meta name="viewport"
-		content="width=device-width, initial-scale=1, user-scalable=0">
-		<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
-	</head>
-	<body ontouchstart="">
-		<div class="container" id="container">
-			<div class="page__hd">
-				<article class="weui-article">
-					<div id="previewImage">
-						<img src="{{coverPicUrl}}">
+<head>
+	<meta charset="utf-8">
+	<title>编辑</title>
+	<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
+	<META HTTP-EQUIV="pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="expires" CONTENT="0">
+	<meta name="viewport"
+	content="width=device-width, initial-scale=1, user-scalable=0">
+	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+</head>
+<body ontouchstart="">
+	<div class="container" id="container">
+		<div class="page__hd">
+			<article class="weui-article">
+				<div id="previewImage">
+					<img src="{{coverPicUrl}}">
+				</div>
+			</article>
+		</div>
+		<div class="page__bd">
+			<div class="weui-cells__title">书名</div>
+			<div class="weui-cells">
+				<div class="weui-cell">
+					<div class="weui-cell__bd">
+						<input class="weui-input" id="inputBookName" maxlength="100" type="text" placeholder="请输入书名" value="{{bookName}}"/>
 					</div>
-				</article>
+				</div>
 			</div>
-			<div class="page__bd">
-				<div class="weui-cells__title">书名</div>
-				<div class="weui-cells">
-					<div class="weui-cell">
-						<div class="weui-cell__bd">
-							<input class="weui-input" id="inputBookName" maxlength="100" type="text" placeholder="请输入书名" value="{{bookName}}"/>
-						</div>
+			<div class="weui-cells__title">作者</div>
+			<div class="weui-cells">
+				<div class="weui-cell">
+					<div class="weui-cell__bd">
+						<input class="weui-input" id="inputAuthor" maxlength="50" type="text" placeholder="请输入作者" value="{{author}}"/>
 					</div>
 				</div>
-				<div class="weui-cells__title">作者</div>
-				<div class="weui-cells">
-					<div class="weui-cell">
-						<div class="weui-cell__bd">
-							<input class="weui-input" id="inputAuthor" maxlength="50" type="text" placeholder="请输入作者" value="{{author}}"/>
-						</div>
+			</div>
+			<div class="weui-cells__title">译者</div>
+			<div class="weui-cells">
+				<div class="weui-cell">
+					<div class="weui-cell__bd">
+						<input class="weui-input" id="inputTranslator" maxlength="50" type="text" placeholder="请输入译者" value="{{translator}}"/>
 					</div>
 				</div>
-				<div class="weui-cells__title">译者</div>
-				<div class="weui-cells">
-					<div class="weui-cell">
-						<div class="weui-cell__bd">
-							<input class="weui-input" id="inputTranslator" maxlength="50" type="text" placeholder="请输入译者" value="{{translator}}"/>
-						</div>
-					</div>
-				</div>
-				<div class="weui-btn-area">
-					<a class="weui-btn weui-btn_primary" id="btnConfirm">确定</a>
-				</div>
+			</div>
+			<div class="weui-btn-area">
+				<a class="weui-btn weui-btn_primary" id="btnConfirm">确定</a>
 			</div>
 		</div>
-	</body>
-	<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
-	<script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
-	<script src="signWechat.js"></script>
-	<script src="js/private-util.js"></script>
-	<script src="js/wechat-editBook.js"></script>
-</html>
+	</div>
+</body>
+<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+<script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
+<script src="signWechat.js"></script>
+<script src="js/private-util.js"></script>
+<script src="js/wechat-editBook.js"></script>

@@ -1,77 +1,74 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>{{title}}</title>
-		<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
-		<META HTTP-EQUIV="pragma" CONTENT="no-cache">
-		<META HTTP-EQUIV="expires" CONTENT="0">
-		<meta name="viewport"
-		content="width=device-width, initial-scale=1, user-scalable=0">
-		<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
-		<script src="https://cdn.bootcss.com/vue/2.4.4/vue.js"></script>
-	</head>
-	<body ontouchstart="">
-		<div class="container" id="container">
-			<div class="weui-tab">
-				<div class="weui-tab__panel">
-					<div class="weui-cells" id="book">{{book}}
-						<div id="openDominoState" v-if='seen' >
-							<div class="weui-cells__title" id='readOwnerInfo' v-html="readOwnerInfo">
-								
-							</div>
-							<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
-							</div>
-							<div class="weui-cells__title" v-if='applyButtonSeen'>
-								<a href="javascript:applyDomino();" class="weui-btn weui-btn_primary">申请接龙读这本实体书</a>
-							</div>
+<head>
+	<meta charset="utf-8">
+	<title>{{title}}</title>
+	<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
+	<META HTTP-EQUIV="pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="expires" CONTENT="0">
+	<meta name="viewport"
+	content="width=device-width, initial-scale=1, user-scalable=0">
+	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+	<script src="https://cdn.bootcss.com/vue/2.4.4/vue.js"></script>
+</head>
+<body ontouchstart="">
+	<div class="container" id="container">
+		<div class="weui-tab">
+			<div class="weui-tab__panel">
+				<div class="weui-cells" id="book">{{book}}
+					<div id="openDominoState" v-if='seen' >
+						<div class="weui-cells__title" id='readOwnerInfo' v-html="readOwnerInfo">
+							
 						</div>
-						<div id="dominoApplyInfo" v-if='seen'>
-							<div  class="weui-cell" >申请接龙的用户共 {{dominoApplyCount}} 人
-							</div>
-							<div  class="weui-cell" v-if="domino_ing" v-html="innerIngHtml">
-							</div>
-							<div  class="weui-cell" v-else >
-								<div class="weui-cell__hd">
-									<img :src="dominoChosenImg">
-								</div>
-								<div class="weui-cell__bd">看完接龙给：{{dominoChosenName}}</div>
-							</div>
+						<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
+						</div>
+						<div class="weui-cells__title" v-if='applyButtonSeen'>
+							<a href="javascript:applyDomino();" class="weui-btn weui-btn_primary">申请接龙读这本实体书</a>
 						</div>
 					</div>
-					<div class="weui-cells" id="notes">{{scriptPicData}}{{notes}}
+					<div id="dominoApplyInfo" v-if='seen'>
+						<div  class="weui-cell" >申请接龙的用户共 {{dominoApplyCount}} 人
+						</div>
+						<div  class="weui-cell" v-if="domino_ing" v-html="innerIngHtml">
+						</div>
+						<div  class="weui-cell" v-else >
+							<div class="weui-cell__hd">
+								<img :src="dominoChosenImg">
+							</div>
+							<div class="weui-cell__bd">看完接龙给：{{dominoChosenName}}</div>
+						</div>
 					</div>
 				</div>
-				<div class="weui-tabbar">
-					<!-- <a href="javascript:;" class="weui-tabbar__item weui-bar__item_on"><a href="javascript:;" class="weui-btn weui-btn_primary">看完分享</a></a> -->
-					{{button}}
+				<div class="weui-cells" id="notes">{{scriptPicData}}{{notes}}
 				</div>
 			</div>
-		</div>
-		<!-- loading toast -->
-		<div id="loadingToast" style="display:none;">
-			<div class="weui-mask_transparent"></div>
-			<div class="weui-toast">
-				<i class="weui-loading weui-icon_toast"></i>
-				<p class="weui-toast__content">数据加载中</p>
+			<div class="weui-tabbar">
+				<!-- <a href="javascript:;" class="weui-tabbar__item weui-bar__item_on"><a href="javascript:;" class="weui-btn weui-btn_primary">看完分享</a></a> -->
+				{{button}}
 			</div>
 		</div>
-		<div class="js_dialog" id="iosDialog2" style="display: none;">
-			<div class="weui-mask"></div>
-			<div class="weui-dialog">
-				<div class="weui-dialog__bd">点击右上角按钮，即可分享到朋友圈，或发给好友</div>
-				<div class="weui-dialog__ft">
-					<a href="javascript:closeShareTip();" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
-				</div>
+	</div>
+	<!-- loading toast -->
+	<div id="loadingToast" style="display:none;">
+		<div class="weui-mask_transparent"></div>
+		<div class="weui-toast">
+			<i class="weui-loading weui-icon_toast"></i>
+			<p class="weui-toast__content">数据加载中</p>
+		</div>
+	</div>
+	<div class="js_dialog" id="iosDialog2" style="display: none;">
+		<div class="weui-mask"></div>
+		<div class="weui-dialog">
+			<div class="weui-dialog__bd">点击右上角按钮，即可分享到朋友圈，或发给好友</div>
+			<div class="weui-dialog__ft">
+				<a href="javascript:closeShareTip();" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
 			</div>
 		</div>
-	</body>
-	<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
-	<script>
-		var imgUrl = '{{imgUrl}}';
-	</script>
-	<script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
-	<script src="signWechat.js"></script>
-	<script src="js/private-util.js"></script>
-	<script src="js/wechat-read.js"></script>
-</html>
+	</div>
+</body>
+<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+<script>
+	var imgUrl = '{{imgUrl}}';
+</script>
+<script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
+<script src="signWechat.js"></script>
+<script src="js/private-util.js"></script>
+<script src="js/wechat-read.js"></script>

@@ -1,54 +1,52 @@
-<!DOCTYPE html>
-<html>
-	<head>
-		<meta charset="utf-8">
-		<title>编辑</title>
-		<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
-		<META HTTP-EQUIV="pragma" CONTENT="no-cache">
-		<META HTTP-EQUIV="expires" CONTENT="0">
-		<meta name="viewport"
-		content="width=device-width, initial-scale=1, user-scalable=0">
-		<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
-	</head>
-	<body ontouchstart="">
-		<div class="container" id="container">
-			<div class="weui-tab">
-				<div class="weui-tab__panel">
-					<div class="weui-cells__title">笔记</div>
-					<div class="weui-cells">
-						<div class="weui-cell">
-							<div class="weui-cell__bd">
-								<textarea class="weui-textarea" id="textareaNote" placeholder="请输入笔记" rows="4">{{note}}</textarea>
-								<input type="hidden" name="readId" id='readId' value='{{readId}}' />
+<head>
+	<meta charset="utf-8">
+	<title>编辑</title>
+	<META HTTP-EQUIV="Cache-Control" CONTENT="no-cache,no-store, must-revalidate">
+	<META HTTP-EQUIV="pragma" CONTENT="no-cache">
+	<META HTTP-EQUIV="expires" CONTENT="0">
+	<meta name="viewport"
+	content="width=device-width, initial-scale=1, user-scalable=0">
+	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+</head>
+<body ontouchstart="">
+	<div class="container" id="container">
+		<div class="weui-tab">
+			<div class="weui-tab__panel">
+				<div class="weui-cells__title">笔记</div>
+				<div class="weui-cells">
+					<div class="weui-cell">
+						<div class="weui-cell__bd">
+							<textarea class="weui-textarea" id="textareaNote" placeholder="请输入笔记" rows="4">{{note}}</textarea>
+							<input type="hidden" name="readId" id='readId' value='{{readId}}' />
+						</div>
+					</div>
+				</div>
+				<div class="weui-cells__title">图片</div>
+				<div class="weui-cells">
+					<div class="weui-cell">
+						<article class="weui-article">
+							<div id="previewImage">
+								{{imgHtml}}
 							</div>
-						</div>
-					</div>
-					<div class="weui-cells__title">图片</div>
-					<div class="weui-cells">
-						<div class="weui-cell">
-							<article class="weui-article">
-								<div id="previewImage">
-									{{imgHtml}}
-								</div>
-							</article>
-						</div>
+						</article>
 					</div>
 				</div>
-				<div class="weui-tabbar">
-					<div class="weui-cells__tips" id="modifyStatus"></div><a href="javascript:showShareTip();" class="weui-btn weui-btn_primary">分享</a><div class="weui-cells__tips"></div><a href="javascript:confirmClick();" class="weui-btn weui-btn_primary">确定</a>
-				</div>
-				<div class="js_dialog" id="iosDialog2" style="display: none;">
-					<div class="weui-mask"></div>
-					<div class="weui-dialog">
-						<div class="weui-dialog__bd">点击右上角按钮，即可分享到朋友圈，或发给好友</div>
-						<div class="weui-dialog__ft">
-							<a href="javascript:closeShareTip();" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
-						</div>
+			</div>
+			<div class="weui-tabbar">
+				<div class="weui-cells__tips" id="modifyStatus"></div><a href="javascript:showShareTip();" class="weui-btn weui-btn_primary">分享</a><div class="weui-cells__tips"></div><a href="javascript:confirmClick();" class="weui-btn weui-btn_primary">确定</a>
+			</div>
+			<div class="js_dialog" id="iosDialog2" style="display: none;">
+				<div class="weui-mask"></div>
+				<div class="weui-dialog">
+					<div class="weui-dialog__bd">点击右上角按钮，即可分享到朋友圈，或发给好友</div>
+					<div class="weui-dialog__ft">
+						<a href="javascript:closeShareTip();" class="weui-dialog__btn weui-dialog__btn_primary">知道了</a>
 					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+</div>
 </body>
 <script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
 <script>
@@ -58,4 +56,3 @@
 <script src="signWechat.js"></script>
 <script src="js/private-util.js"></script>
 <script src="js/wechat-editNote.js"></script>
-</html>
