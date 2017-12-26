@@ -1,10 +1,13 @@
-// 'use strict';
+'use strict';
 var express = require('express');
 var session = require('express-session');
 var RedisStore = require('connect-redis')(session);
 var path = require('path');
 var sign = require('./sign.js');
 var CONFIG = require('./config.js');
+var WXPay = require('weixin-pay');
+var COS = require('cos-nodejs-sdk-v5');
+
 var globalInfo = require('./globalInfo.js');
 var app = express();
 var mysql = require('mysql');
@@ -13,6 +16,7 @@ var fs = require("fs");
 var pu = require('./privateUtil.js');
 var log4js = require('log4js');
 var logger = log4js.getLogger();
+
 // log4js.configure({ 
 // 	appenders: [{  
 // 		type: 'console',
@@ -985,7 +989,7 @@ function cancelDominoAjax(req, res) {
 	}
 }
 
-var WXPay = require('co-weixin-pay');
+
 var wxpay = WXPay({
 	appid: CONFIG.WECHAT.APPID,
 	mch_id: CONFIG.WXPAY.MCH_ID,
@@ -1165,7 +1169,7 @@ function listReadAjax(req, res) {
 
 function createUnifiedOrderAjax(req, res) {
 
-
+	logger.debug('createUnifiedOrderAjax req', req.query.type)
 	var ctime = new Date()
 	var out_trade_no = ctime.getTime() * 1000000 + CONFIG.SERVER_ID * 10000 + 10000 * Math.random();
 	var ip = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
@@ -1186,6 +1190,7 @@ function createUnifiedOrderAjax(req, res) {
 
 
 	function createWxPayOrder() {
+		logger.debug('createWxPayOrder req', req.query.type)
 		var wxpayInfo
 		if (req.query.type == 'expressFee') {
 			wxpayInfo = {
@@ -1214,7 +1219,7 @@ function createUnifiedOrderAjax(req, res) {
 			if (err) {
 				logger.error(err)
 			}
-			// logger.debug('createUnifiedOrder result:', result);
+			logger.debug('createUnifiedOrder result:', result);
 			var reqparam = {
 				appId: CONFIG.WECHAT.APPID,
 				timeStamp: parseInt(new Date().getTime() / 1000) + "",
@@ -1222,7 +1227,7 @@ function createUnifiedOrderAjax(req, res) {
 				package: "prepay_id=" + result.prepay_id,
 				signType: "MD5",
 			};
-			// logger.debug('createUnifiedOrder reqparam:', reqparam)
+			logger.debug('createUnifiedOrder reqparam:', reqparam)
 			reqparam.paySign = wxpay.sign(reqparam);
 			reqparam.timestamp = reqparam.timeStamp;
 			delete reqparam.timeStamp
@@ -1287,7 +1292,7 @@ function sessionTest(req, res) {
 	res.end()
 }
 
-var COS = require('cos-nodejs-sdk-v5');
+
 
 function picUploadAjax(req, res) {
 	if (!req.body) return res.sendStatus(400)
@@ -1326,42 +1331,14 @@ function picUploadAjax(req, res) {
 					var cos = new COS(paramsForCos);
 					// 分片上传
 					var keyFileNameWithTime = ctime.getFullYear() + '/' + (ctime.getMonth() + 1) + '/' + ctime.getDate() + '/' + req.session.wechatBase.openid + '-' + mediaId + '.jpg'
-						// var paramsForUpload = {
-						// 	Bucket: CONFIG.QCLOUD_PARA.COS.Bucket,
-						// 	Region: CONFIG.QCLOUD_PARA.COS.Region,
-						// 	Key: keyFileNameWithTime,
-						// 	FilePath: tmpFileName
-						// }
-						// logger.debug('paramsForUpload', paramsForUpload)
-						// cos.sliceUploadFile(paramsForUpload, function(err, data) {
-						// 	logger.debug(arguments)
-						// 	if (err) {
-						// 		logger.error('cos.sliceUploadFile', arguments);
-						// 	} else {
-						// 		//delete tmp file
-						// 		fs.unlink(tmpFileName, (err) => {
-						// 			if (err) {
-						// 				logger.error('fs.unlink', err);
-						// 			}
-						// 			successUploadCount++
-						// 			successUploadBytes += body.length
-						// 			keyNames.push(keyFileNameWithTime)
-						// 			if (successUploadCount == req.body.serverId.length) {
-						// 				processCmd()
-						// 			}
-						// 		});
-						// 	}
-						// });
 					var paramsForUpload = {
 						Bucket: CONFIG.QCLOUD_PARA.COS.Bucket,
 						Region: CONFIG.QCLOUD_PARA.COS.Region,
 						Key: keyFileNameWithTime,
-						// FilePath: tmpFileName,
-						// Body: fs.readFileSync(tmpFileName),
-						Body: fs.createReadStream(tmpFileName),
-						ContentLength: fs.statSync(tmpFileName).size
+						FilePath: tmpFileName
 					}
-					cos.putObject(paramsForUpload, function(err, data) {
+					logger.debug('paramsForUpload', paramsForUpload)
+					cos.sliceUploadFile(paramsForUpload, function(err, data) {
 						logger.debug(arguments)
 						if (err) {
 							logger.error('cos.sliceUploadFile', arguments);
@@ -1380,6 +1357,34 @@ function picUploadAjax(req, res) {
 							});
 						}
 					});
+					// var paramsForUpload = {
+					// 	Bucket: CONFIG.QCLOUD_PARA.COS.Bucket,
+					// 	Region: CONFIG.QCLOUD_PARA.COS.Region,
+					// 	Key: keyFileNameWithTime,
+					// 	// FilePath: tmpFileName,
+					// 	// Body: fs.readFileSync(tmpFileName),
+					// 	Body: fs.createReadStream(tmpFileName),
+					// 	ContentLength: fs.statSync(tmpFileName).size
+					// }
+					// cos.putObject(paramsForUpload, function(err, data) {
+					// 	logger.debug(arguments)
+					// 	if (err) {
+					// 		logger.error('cos.sliceUploadFile', arguments);
+					// 	} else {
+					// 		//delete tmp file
+					// 		fs.unlink(tmpFileName, (err) => {
+					// 			if (err) {
+					// 				logger.error('fs.unlink', err);
+					// 			}
+					// 			successUploadCount++
+					// 			successUploadBytes += body.length
+					// 			keyNames.push(keyFileNameWithTime)
+					// 			if (successUploadCount == req.body.serverId.length) {
+					// 				processCmd()
+					// 			}
+					// 		});
+					// 	}
+					// });
 				});
 			});
 		});
