@@ -190,6 +190,22 @@ function getApplyDominoInfoWithReadId(id) {
 						} else {
 							dominoInfo.expressDefaultFee = 22
 						}
+						if (info[0].expressFeePayStatus != 'refund' && info[0].dominoStatus == "waitChoose") {
+							$.modal({
+								title: "",
+								text: "是否马上支付运费",
+								buttons: [{
+									text: "取消",
+									className: "default",
+									onClick: function() {}
+								}, {
+									text: "支付",
+									onClick: function() {
+										showPayExpressFee()
+									},
+								}, ]
+							});
+						}
 					}
 				} else if (info[0].dominoMethod == 'byHand') {
 					dominoInfo.dominoMethod = "见面接龙书籍"
