@@ -24,7 +24,7 @@
 					</div>
 					<div class="weui-cell" v-for="(item,index) in items" :key='item.openId' v-on:click='select(index)'>
 						<div class="weui-cell__hd">
-							<img :src="item.img">
+							<img height="50px" width="50px" :src="item.img">
 						</div>
 						<div class="weui-cell__bd">
 							<p>{{item.nickName}}({{item.method}}){{item.aboutCity}}</p>

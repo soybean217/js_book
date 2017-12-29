@@ -91,7 +91,7 @@ function procApplyListData(rev) {
   if (rev.applyList && rev.applyList.length > 0) {
     for (i in rev.applyList) {
       var tmpItem = {}
-      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/92'
+      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/64'
       tmpItem.headImgUrl = rowImgUrl
       tmpItem.nickName = rev.applyList[i].nickName
       tmpItem.bookName = rev.applyList[i].bookName
