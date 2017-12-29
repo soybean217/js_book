@@ -91,7 +91,7 @@ function procApplyListData(rev) {
   if (rev.applyList && rev.applyList.length > 0) {
     for (i in rev.applyList) {
       var tmpItem = {}
-      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/46'
+      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/92'
       tmpItem.headImgUrl = rowImgUrl
       tmpItem.nickName = rev.applyList[i].nickName
       tmpItem.bookName = rev.applyList[i].bookName
@@ -110,7 +110,7 @@ function procApplyListData(rev) {
           tmpItem.aboutCity += '［未支付运费］'
         }
       }
-      tmpItem.cover = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rev.applyList[i].cover + '?imageView2/2/w/50'
+      tmpItem.cover = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rev.applyList[i].cover + '?imageView2/2/w/80'
       if (rev.applyList[i].dominoStatus == 'chosen') {
         tmpItem.dominoStatusShow = '(确认分享给您)'
       } else if (rev.applyList[i].dominoStatus == 'reject') {

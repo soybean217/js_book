@@ -95,7 +95,7 @@ var CONFIG = {
 };
 
 function htmlBookInfo(row) {
-	return '<div class="weui-cell"><div class = "weui-cell__hd" style = "position: relative;margin-right: 10px;" ><img src = "' + CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/2/w/50"  style = "width: 50px;display: block" /></div><div class = "weui-cell__bd"><p style = "color: #000000;">' + row.bookName + '</p><p style = "font-size: 13px;color: #888888;">' + (row.author && row.author.length > 0 ? (' 作者：' + row.author + ' ') : '') + (row.translator && row.translator.length > 0 ? (' 译者：' + row.translator + ' ') : '') + '</p></div></div>'
+	return '<div class="weui-cell"><div class = "weui-cell__hd" style = "position: relative;margin-right: 10px;" ><img src = "' + CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/2/w/80"  style = "width: 50px;display: block" /></div><div class = "weui-cell__bd"><p style = "color: #000000;">' + row.bookName + '</p><p style = "font-size: 13px;color: #888888;">' + (row.author && row.author.length > 0 ? (' 作者：' + row.author + ' ') : '') + (row.translator && row.translator.length > 0 ? (' 译者：' + row.translator + ' ') : '') + '</p></div></div>'
 }
 
 function showShareTip() {

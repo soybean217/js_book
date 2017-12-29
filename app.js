@@ -358,7 +358,7 @@ function profile(req, res) {
 var authReadButton = '<a href="javascript:showShareTip();" class="weui-btn weui-btn_primary">分享</a><div class="weui-cells__tips"></div><a href="javascript:;" class="weui-btn weui-btn_primary" id="chooseImageNote">增加读书笔记</a>'
 
 function bookViewHtml(row) {
-	return '<div class="weui-cell"><div class = "weui-cell__hd" style = "position: relative;margin-right: 10px;" ><img src = "' + CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/2/w/50"  style = "width: 50px;display: block" /></div><div class = "weui-cell__bd"><p style = "color: #000000;">' + row.bookName + '</p><p style = "font-size: 13px;color: #888888;">' + (row.author.length > 0 ? (' 作者：' + row.author + ' ') : '') + (row.translator.length > 0 ? (' 译者：' + row.translator + ' ') : '') + '</p></div></div>'
+	return '<div class="weui-cell"><div class = "weui-cell__hd" style = "position: relative;margin-right: 10px;" ><img src = "' + CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/2/w/80"  style = "width: 50px;display: block" /></div><div class = "weui-cell__bd"><p style = "color: #000000;">' + row.bookName + '</p><p style = "font-size: 13px;color: #888888;">' + (row.author.length > 0 ? (' 作者：' + row.author + ' ') : '') + (row.translator.length > 0 ? (' 译者：' + row.translator + ' ') : '') + '</p></div></div>'
 }
 
 function read(req, res) {
@@ -397,7 +397,7 @@ function read(req, res) {
 						notesPicScript += 'pics["' + row.noteId + '"]="' + row.pics + '";'
 					})
 					renderDict['{{button}}'] = button
-					renderDict['{{imgUrl}}'] = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/1/w/50'
+					renderDict['{{imgUrl}}'] = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/1/w/80'
 					renderDict['{{title}}'] = row.bookName + '-' + row.nickName + '的读书笔记'
 					renderDict['{{book}}'] = bookHtml
 					renderDict['{{scriptPicData}}'] = '<script>picDomain="' + CONFIG.QCLOUD_PARA.BUCKET_DOMAIN + '";var pics={};' + notesPicScript + '</script>'
@@ -416,7 +416,7 @@ function read(req, res) {
 							var notesHtml = ''
 							var notesPicScript = ''
 							renderDict['{{button}}'] = button
-							renderDict['{{imgUrl}}'] = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/1/w/50'
+							renderDict['{{imgUrl}}'] = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/1/w/80'
 							renderDict['{{title}}'] = row.bookName + '-' + row.nickName + '的读书笔记'
 							renderDict['{{book}}'] = bookHtml
 							renderDict['{{scriptPicData}}'] = '<script>picDomain="' + CONFIG.QCLOUD_PARA.BUCKET_DOMAIN + '";var pics={};' + notesPicScript + '</script>'
@@ -477,12 +477,12 @@ function editNote(req, res) {
 		var imgUrl = ''
 		rows[0].pics.split(',').forEach(function(row) {
 			// if (i == 0) {
-			// 	imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row + '?imageView2/1/w/50'
+			// 	imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row + '?imageView2/1/w/80'
 			// }
 			i++
 			imgHtml += '<img src="' + CONFIG.QCLOUD_PARA.BUCKET_DOMAIN + row + '">'
 		})
-		imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rows[0].cover + '?imageView2/1/w/50'
+		imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rows[0].cover + '?imageView2/1/w/80'
 		var bookHtml = ''
 		if (htmlFile == 'viewNote.htm') {
 			bookHtml = '<a href="read?id=' + rows[0].readId + '">' + bookViewHtml(rows[0]) + '<div class="weui-cell"><div class="weui-cell__bd"><span id="spanNote">查看 ' + rows[0].nickName + ' 更多本书笔记...</span></div></div></a>'
