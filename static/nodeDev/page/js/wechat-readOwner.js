@@ -91,8 +91,8 @@ wx.ready(function() {
 	function shareData(act) {
 		// title: '微信JS-SDK Demo',
 		// desc: '读书接龙',
-		// link: 'http://demo.open.weixin.qq.com/jssdk/',
-		// imgUrl: 'http://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRt8Qia4lv7k3M9J1SKqKCImxJCt7j9rHYicKDI45jRPBxdzdyREWnk0ia0N5TMnMfth7SdxtzMvVgXg/0'
+		// link: 'https://demo.open.weixin.qq.com/jssdk/',
+		// imgUrl: 'https://mmbiz.qpic.cn/mmbiz/icTdbqWNOwNRt8Qia4lv7k3M9J1SKqKCImxJCt7j9rHYicKDI45jRPBxdzdyREWnk0ia0N5TMnMfth7SdxtzMvVgXg/0'
 		return { // title: 'title', // 分享标题
 			desc: '请关注公众号-读书接龙', // 分享描述
 			// link: '', // 分享链接，该链接域名或路径必须与当前页面对应的公众号JS安全域名一致

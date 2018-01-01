@@ -21,9 +21,11 @@ module.exports.raw = function(args, isFilterCode) {
 module.exports.cleanedUrl = function(req) {
 	cleanedQueryString = this.raw(req.query, true)
 	if (cleanedQueryString.length > 0) {
-		return req.protocol + '://' + req.hostname + req.url.split('?')[0] + '?' + cleanedQueryString
+		// return req.protocol + '://' + req.hostname + req.url.split('?')[0] + '?' + cleanedQueryString
+		return 'https://' + req.hostname + req.url.split('?')[0] + '?' + cleanedQueryString
 	} else {
-		return req.protocol + '://' + req.hostname + req.url.split('?')[0]
+		// return req.protocol + '://' + req.hostname + req.url.split('?')[0]
+		return 'https://' + req.hostname + req.url.split('?')[0]
 	}
 };
 

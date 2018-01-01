@@ -90,7 +90,7 @@ function logAction(act, result) {
 
 var CONFIG = {
 	QCLOUD_PARA: {
-		THUMBNAILS_DOMAIN: 'http://pic03-1253796995.image.myqcloud.com/',
+		THUMBNAILS_DOMAIN: 'https://pic03-1253796995.image.myqcloud.com/',
 	},
 };
 

@@ -1142,6 +1142,10 @@ function syncRadioStatusWithReadIdAjax(req, res) {
 }
 
 function listReadAjax(req, res) {
+	res.set({
+		"Cache-Control": "no-cache, no-store, max-age=0, must-revalidate",
+		"Expires": "-1",
+	})
 	poolConfig.query("SELECT ifnull(bookName,'') as bookName,cover,ifnull(author,'') as author,ifnull(translator,'') as translator,tbl_reads.id FROM  `tbl_reads`,`tbl_books` WHERE tbl_books.id = tbl_reads.bookId AND openId=? order by lastNoteTime desc", [req.session.wechatBase.openid], function(err, rows, fields) {
 		if (err) {
 			logger.err(err);
