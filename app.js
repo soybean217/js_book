@@ -139,7 +139,8 @@ app.use(function(req, res, next) {
 	}
 
 	function toWechatOauth(scope) {
-		var urlEncodedUrl = encodeURIComponent(req.protocol + '://' + req.hostname + req.url)
+		// var urlEncodedUrl = encodeURIComponent(req.protocol + '://' + req.hostname + req.url)
+		var urlEncodedUrl = encodeURIComponent('https://' + req.hostname + req.url)
 		var oAuthUrl = 'https://open.weixin.qq.com/connect/oauth2/authorize?appid=' + CONFIG.WECHAT.APPID + '&redirect_uri=' + urlEncodedUrl + '&response_type=code&scope=' + scope + '&state=123#wechat_redirect'
 		isNext = false
 		return res.send('<script>location="' + oAuthUrl + '"</script>')
@@ -311,11 +312,12 @@ app.use(function(req, res, next) {
 
 	function redirectAfterOAuthSuccess() {
 		var target = pu.cleanedUrl(req)
+		var timestamp = +new Date();
 		if (target.indexOf('f=') == -1) {
 			if (target.indexOf('?') == -1) {
-				target += '?f=' + req.session.wechatBase.openid
+				target += '?f=' + req.session.wechatBase.openid + '&t=' + timestamp
 			} else {
-				target += '&f=' + req.session.wechatBase.openid
+				target += '&f=' + req.session.wechatBase.openid + '&t=' + timestamp
 			}
 		}
 		return res.send('<script>location="' + target + '"</script>')
