@@ -92,6 +92,7 @@ var CONFIG = {
 	QCLOUD_PARA: {
 		THUMBNAILS_DOMAIN: 'https://pic03-1253796995.image.myqcloud.com/',
 	},
+	HEAD_ICON_REAL_RESOLUTION: '96'
 };
 
 function htmlBookInfo(row) {

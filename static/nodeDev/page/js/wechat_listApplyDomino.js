@@ -230,7 +230,7 @@ function procApplyListData(rev) {
   if (rev.applyList && rev.applyList.length > 0) {
     for (i in rev.applyList) {
       var tmpItem = {}
-      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/96'
+      var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/' + CONFIG.HEAD_ICON_REAL_RESOLUTION
       tmpItem.img = rowImgUrl
       tmpItem.nickName = rev.applyList[i].nickName
       tmpItem.openId = rev.applyList[i].openId

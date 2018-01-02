@@ -761,7 +761,7 @@ function getBaseInfoToClient(req) {
 function getApplyListAjax(req, res) {
 
 	function getApplyList() {
-		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_reads on tbl_apply_dominos.readId=tbl_reads.id join tbl_books on tbl_books.id = tbl_reads.bookId join tbl_wechat_users on tbl_reads.openId=tbl_wechat_users.openid WHERE tbl_apply_dominos.openid  = ? order by dominoStatus", [req.session.wechatBase.openid], function(err, rows, fields) {
+		poolConfig.query("SELECT * FROM  `tbl_apply_dominos` join tbl_reads on tbl_apply_dominos.readId=tbl_reads.id join tbl_books on tbl_books.id = tbl_reads.bookId join tbl_wechat_users on tbl_reads.openId=tbl_wechat_users.openid WHERE tbl_apply_dominos.openid  = ? order by tbl_apply_dominos.id desc", [req.session.wechatBase.openid], function(err, rows, fields) {
 			if (err) {
 				logger.error(err);
 				fail()
