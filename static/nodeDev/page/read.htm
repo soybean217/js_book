@@ -21,7 +21,7 @@
 						<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
 						</div>
 						<div class="weui-cells__title" v-if='applyButtonSeen'>
-							<a href="javascript:applyDomino();" class="weui-btn weui-btn_primary">申请接龙读这本实体书</a>
+							<a href="javascript:applyDomino();" class="weui-btn weui-btn_primary">{{applyButtonText}}</a>
 						</div>
 					</div>
 					<div id="dominoApplyInfo" v-if='seen'>
@@ -64,11 +64,11 @@
 		</div>
 	</div>
 </body>
-<script src="http://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+<script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
 <script>
 	var imgUrl = '{{imgUrl}}';
 </script>
-<script src="http://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
+<script src="https://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
 <script src="signWechat.js"></script>
 <script src="js/private-util.js"></script>
 <script src="js/wechat-read.js"></script>
