@@ -400,7 +400,7 @@ function read(req, res) {
 					})
 					renderDict['{{button}}'] = button
 					renderDict['{{imgUrl}}'] = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/1/w/80'
-					renderDict['{{title}}'] = row.bookName + '-' + row.nickName + '的读书笔记'
+					renderDict['{{title}}'] = '《' + row.bookName + '》' + row.nickName + '的读书分享'
 					renderDict['{{book}}'] = bookHtml
 					renderDict['{{scriptPicData}}'] = '<script>picDomain="' + CONFIG.QCLOUD_PARA.BUCKET_DOMAIN + '";var pics={};' + notesPicScript + '</script>'
 					renderDict['{{notes}}'] = notesHtml
@@ -419,7 +419,7 @@ function read(req, res) {
 							var notesPicScript = ''
 							renderDict['{{button}}'] = button
 							renderDict['{{imgUrl}}'] = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/1/w/80'
-							renderDict['{{title}}'] = row.bookName + '-' + row.nickName + '的读书笔记'
+							renderDict['{{title}}'] = '《' + row.bookName + '》' + row.nickName + '的读书分享'
 							renderDict['{{book}}'] = bookHtml
 							renderDict['{{scriptPicData}}'] = '<script>picDomain="' + CONFIG.QCLOUD_PARA.BUCKET_DOMAIN + '";var pics={};' + notesPicScript + '</script>'
 							renderDict['{{notes}}'] = notesHtml

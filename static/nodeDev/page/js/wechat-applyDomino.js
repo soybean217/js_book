@@ -155,8 +155,49 @@ var dominoInfo = new Vue({
 		expressDefaultFee: 0,
 		bookAddressInfo: '',
 		expressFee: 0,
+		dominoStatus: '接龙中',
 	},
 })
+
+function procDominoingDisplay(info) {
+	if (info[0].dominoMethod == 'express') {
+		dominoInfo.seenExpress = true
+		dominoInfo.dominoMethod = "快递"
+		expressAddress = JSON.parse(info[0].expressAddress)
+		dominoInfo.expressAddress = '我的收件地址:' + '<br>姓名:' + expressAddress.userName + '<br>' + '邮编:' + expressAddress.postalCode + '<br>' + expressAddress.provinceName + ' ' + expressAddress.cityName + ' ' + expressAddress.countryName + ' ' + expressAddress.detailInfo + '<br>电话:' + expressAddress.telNumber
+		if (info[0].expressFeePayStatus == 'payed') {
+			dominoInfo.seenPayProcess = false
+			dominoInfo.seenPayed = true
+			dominoInfo.expressFee = info[0].expressFee
+		} else {
+			dominoInfo.seenPayProcess = true
+			dominoInfo.seenPayed = false
+			if (expressAddress.provinceName == bookAddress.provinceName && bookAddress.cityName == expressAddress.cityName) {
+				dominoInfo.expressDefaultFee = 12
+			} else {
+				dominoInfo.expressDefaultFee = 22
+			}
+			if (info[0].expressFeePayStatus != 'refund' && info[0].dominoStatus == "waitChoose") {
+				$.modal({
+					title: "",
+					text: "是否马上支付运费",
+					buttons: [{
+						text: "取消",
+						className: "default",
+						onClick: function() {}
+					}, {
+						text: "支付",
+						onClick: function() {
+							showPayExpressFee()
+						},
+					}, ]
+				});
+			}
+		}
+	} else if (info[0].dominoMethod == 'byHand') {
+		dominoInfo.dominoMethod = "见面接龙书籍"
+	}
+}
 
 function getApplyDominoInfoWithReadId(id) {
 	$.ajax({
@@ -173,55 +214,19 @@ function getApplyDominoInfoWithReadId(id) {
 				bookAddress = JSON.parse(info[0].bookAddress)
 				dominoInfo.bookAddressInfo = '书籍所在地：' +
 					bookAddress.provinceName + ' ' + bookAddress.cityName + ' ' + bookAddress.countryName
-				if (info[0].dominoMethod == 'express') {
-					dominoInfo.seenExpress = true
-					dominoInfo.dominoMethod = "快递"
-					expressAddress = JSON.parse(info[0].expressAddress)
-					dominoInfo.expressAddress = '我的收件地址:' + '<br>姓名:' + expressAddress.userName + '<br>' + '邮编:' + expressAddress.postalCode + '<br>' + expressAddress.provinceName + ' ' + expressAddress.cityName + ' ' + expressAddress.countryName + ' ' + expressAddress.detailInfo + '<br>电话:' + expressAddress.telNumber
-					if (info[0].expressFeePayStatus == 'payed') {
-						dominoInfo.seenPayProcess = false
-						dominoInfo.seenPayed = true
-						dominoInfo.expressFee = info[0].expressFee
-					} else {
-						dominoInfo.seenPayProcess = true
-						dominoInfo.seenPayed = false
-						if (expressAddress.provinceName == bookAddress.provinceName && bookAddress.cityName == expressAddress.cityName) {
-							dominoInfo.expressDefaultFee = 12
-						} else {
-							dominoInfo.expressDefaultFee = 22
-						}
-						if (info[0].expressFeePayStatus != 'refund' && info[0].dominoStatus == "waitChoose") {
-							$.modal({
-								title: "",
-								text: "是否马上支付运费",
-								buttons: [{
-									text: "取消",
-									className: "default",
-									onClick: function() {}
-								}, {
-									text: "支付",
-									onClick: function() {
-										showPayExpressFee()
-									},
-								}, ]
-							});
-						}
-					}
-				} else if (info[0].dominoMethod == 'byHand') {
-					dominoInfo.dominoMethod = "见面接龙书籍"
+				if (info[0].dominoOpenId && info[0].dominoOpenId.length > 5) {
+					dominoInfo.dominoStatus = '接龙完成'
+					dominoInfo.seenPayProcess = false
+				} else {
+					procDominoingDisplay(info)
 				}
+
 			} else {
 				$.modal({
-					title: "选择接龙方式",
-					text: "选择快递将需要提供收件地址和快递费",
+					title: "快递接龙实体书",
+					text: "选择或输入您的快递地址",
 					buttons: [{
-						text: "见面接龙",
-						className: "default",
-						onClick: function() {
-							takeBookByHand()
-						}
-					}, {
-						text: "快递",
+						text: "确认",
 						onClick: function() {
 							editReceiveAddress()
 						}
