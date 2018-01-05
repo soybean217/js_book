@@ -243,7 +243,7 @@ function procApplyListData(rev) {
       if (rev.applyList[i].dominoMethod == 'byHand') {
         tmpItem.method = '自取'
       } else if (rev.applyList[i].dominoMethod == 'express') {
-        tmpItem.method = '快递'
+        tmpItem.method = '快递给' + rev.applyList[i].expressAddress.userName
         tmpItem.aboutCity = '寄往' + rev.applyList[i].expressAddress.provinceName + rev.applyList[i].expressAddress.cityName
         if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'payed') {
           tmpItem.aboutCity += '［已支付运费' + rev.applyList[i].expressFee + '元］'

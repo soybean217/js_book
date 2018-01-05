@@ -722,6 +722,7 @@ function getDominoApplyListWithReadIdAjax(req, res) {
 							rows[i].expressAddress = {
 								provinceName: addressInfo.provinceName,
 								cityName: addressInfo.cityName,
+								userName: addressInfo.userName,
 							}
 						}
 					}
