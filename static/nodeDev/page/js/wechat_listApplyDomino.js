@@ -1,4 +1,5 @@
 var gInfo = {}
+$.showLoading();
 wx.ready(function() {
 
   wxSdkSuccess();
@@ -211,13 +212,18 @@ function getDominoApplysWithReadId(readId) {
     success: function(result) {
       rev = JSON.parse(result);
       console.log('rev', rev)
-      gInfo = rev
-      if (rev.readInfo) {
-        book.bookInfo = htmlBookInfo(rev.readInfo)
-      }
-      procApplyListData(rev)
-      if (rev.applyList[0].dominoStatus == "chosen" && rev.baseInfo.openid == rev.readInfo.openId) {
-        showChosenApplyAddress(rev.applyList[0].openId, getUrlParam('readid'))
+      if (rev.status && rev.status == 'error') {
+        alert(JSON.stringify(rev));
+      } else {
+        gInfo = rev
+        if (rev.readInfo) {
+          book.bookInfo = htmlBookInfo(rev.readInfo)
+        }
+        procApplyListData(rev)
+        if (rev.applyList[0].dominoStatus == "chosen" && rev.baseInfo.openid == rev.readInfo.openId) {
+          showChosenApplyAddress(rev.applyList[0].openId, getUrlParam('readid'))
+        }
+        $.hideLoading();
       }
     },
     error: function(xhr, status) {
@@ -241,6 +247,8 @@ function procApplyListData(rev) {
         tmpItem.aboutCity = '寄往' + rev.applyList[i].expressAddress.provinceName + rev.applyList[i].expressAddress.cityName
         if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'payed') {
           tmpItem.aboutCity += '［已支付运费' + rev.applyList[i].expressFee + '元］'
+        } else if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'refund') {
+          tmpItem.aboutCity += '［已退回运费' + rev.applyList[i].expressFee + '元］'
         } else {
           tmpItem.aboutCity += '［未支付运费］'
         }

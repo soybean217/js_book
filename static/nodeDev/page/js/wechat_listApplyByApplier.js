@@ -1,4 +1,6 @@
 var gInfo = {}
+$.showLoading();
+
 wx.ready(function() {
 
   wxSdkSuccess();
@@ -80,6 +82,7 @@ function getApplyList() {
       console.log('rev', rev)
       gInfo = rev
       procApplyListData(rev)
+      $.hideLoading();
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));

@@ -538,7 +538,7 @@ function getReadFullInfo(readid, succ, fail) {
 			if (rows.length > 0) {
 				succ(rows[0])
 			} else {
-				logger.warn(tag + ' record is not exist . ' + req.url)
+				logger.warn(tag + ' record is not exist .tbl_reads: ' + readid)
 				return fail()
 			}
 		}
