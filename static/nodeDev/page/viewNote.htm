@@ -7,6 +7,7 @@
 	<meta name="viewport"
 	content="width=device-width, initial-scale=1, user-scalable=0">
 	<link rel="stylesheet" href="https://res.wx.qq.com/open/libs/weui/1.1.2/weui.min.css">
+	<script src="https://cdn.bootcss.com/vue/2.4.4/vue.js"></script>
 </head>
 <body ontouchstart="">
 	<div class="container" id="container">
@@ -14,6 +15,28 @@
 			<div class="weui-tab__panel">
 				<div class="weui-cells">
 					{{bookViewHtml}}
+					<div id="openDominoState" v-if='seen' >
+						<div class="weui-cells__title" id='readOwnerInfo' v-html="readOwnerInfo">
+							
+						</div>
+						<div class="weui-cells__title" id='bookAddressContent' v-html="bookAddressInfo">
+						</div>
+						<div class="weui-cells__title" v-if='applyButtonSeen'>
+							<a href="javascript:applyDomino();" class="weui-btn weui-btn_primary">{{applyButtonText}}</a>
+						</div>
+					</div>
+					<div id="dominoApplyInfo" v-if='seen'>
+						<div  class="weui-cell" >申请接龙共 {{dominoApplyCount}} 人
+						</div>
+						<div  class="weui-cell" v-if="domino_ing" v-html="innerIngHtml">
+						</div>
+						<div  class="weui-cell" v-else >
+							<div class="weui-cell__hd">
+								<img height="50px" width="50px" :src="dominoChosenImg">
+							</div>
+							<div class="weui-cell__bd">看完接龙给：{{dominoChosenName}}</div>
+						</div>
+					</div>
 				</div>
 				<div class="weui-cells__title">笔记</div>
 				<div class="weui-cells">
@@ -44,29 +67,6 @@
 <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
 <script>
 	var imgUrl = '{{imgUrl}}';
-	wx.config({
-		debug : sign.debug,
-		appId :sign.appId
-	,
-		timestamp :sign.timestamp
-	,
-		nonceStr :sign.nonceStr
-	,
-		signature :sign.signature
-	,
-		jsApiList : [ 'checkJsApi', 'onMenuShareTimeline',
-				'onMenuShareAppMessage', 'onMenuShareQQ', 'onMenuShareWeibo',
-				'onMenuShareQZone', 'hideMenuItems', 'showMenuItems',
-				'hideAllNonBaseMenuItem', 'showAllNonBaseMenuItem',
-				'translateVoice', 'startRecord', 'stopRecord',
-				'onVoiceRecordEnd', 'playVoice', 'onVoicePlayEnd',
-				'pauseVoice', 'stopVoice', 'uploadVoice', 'downloadVoice',
-				'chooseImage', 'previewImage', 'uploadImage', 'downloadImage',
-				'getNetworkType', 'openLocation', 'getLocation',
-				'hideOptionMenu', 'showOptionMenu', 'closeWindow',
-				'scanQRCode', 'chooseWXPay', 'openProductSpecificView',
-				'addCard', 'chooseCard', 'openCard' ]
-	});
 </script>
 <script src="https://cdnjs.gtimg.com/cdnjs/libs/zepto/1.1.4/zepto.min.js"></script>
 <script src="signWechat.js"></script>

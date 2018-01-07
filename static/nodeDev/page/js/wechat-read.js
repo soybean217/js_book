@@ -1,3 +1,4 @@
+$.showLoading();
 wx.ready(function() {
 
 	wxSdkSuccess();
@@ -7,6 +8,8 @@ wx.ready(function() {
 		localId: [],
 		serverId: [],
 	};
+
+	registerPreviewImage()
 
 	getReadInfoWithId(getUrlParam('id'));
 
@@ -74,7 +77,7 @@ var openDominoState = new Vue({
 		readOwnerInfo: '',
 		seen: false,
 		applyButtonSeen: false,
-		applyButtonText: '申请接龙读这本实体书',
+		applyButtonText: '申请接龙读这本书',
 	},
 })
 var dominoApplyInfo = new Vue({
@@ -91,7 +94,7 @@ function applyDomino() {
 }
 
 function showBookAddress(res) {
-	openDominoState.bookAddressInfo = '实体书所在地：' +
+	openDominoState.bookAddressInfo = '所在地：' +
 		res.provinceName + ' ' + res.cityName + ' ' + res.countryName
 	openDominoState.seen = true
 }
@@ -103,6 +106,7 @@ function getReadInfoWithId(id) {
 		contentType: "application/json",
 		success: function(result) {
 			readInfo = JSON.parse(result);
+			console.log('readInfo', readInfo)
 			if (!(readInfo[0].dominoOpenId && readInfo[0].dominoOpenId.length > 4)) {
 				openDominoState.applyButtonSeen = true
 			}
@@ -111,6 +115,14 @@ function getReadInfoWithId(id) {
 					openDominoState.readOwnerInfo = readInfo[0].nickName + ' 看完将分享这本实体书'
 					showBookAddress(readInfo[0].bookAddress)
 					getDominoApplysWithReadId(id)
+				} else {
+					$.hideLoading();
+				}
+				if (readInfo[0].cover && readInfo[0].cover.length > 0) {
+					wx.previewImage({
+						current: CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + readInfo[0].cover,
+						urls: [CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + readInfo[0].cover],
+					});
 				}
 			}
 		},
@@ -150,6 +162,7 @@ function getDominoApplysWithReadId(readId) {
 				dominoApplyInfo.dominoApplyCount = rev.applyList.length
 				dominoApplyInfo.seen = true
 			}
+			$.hideLoading();
 		},
 		error: function(xhr, status) {
 			alert(JSON.stringify(status));

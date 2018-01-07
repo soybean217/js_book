@@ -359,8 +359,12 @@ function profile(req, res) {
 
 var authReadButton = '<a href="javascript:showShareTip();" class="weui-btn weui-btn_primary">分享</a><div class="weui-cells__tips"></div><a href="javascript:;" class="weui-btn weui-btn_primary" id="chooseImageNote">增加读书笔记</a>'
 
-function bookViewHtml(row) {
-	return '<div class="weui-cell"><div class = "weui-cell__hd" style = "position: relative;margin-right: 10px;" ><img src = "' + CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + '?imageView2/2/w/80"  style = "width: 50px;display: block" /></div><div class = "weui-cell__bd"><p style = "color: #000000;">' + row.bookName + '</p><p style = "font-size: 13px;color: #888888;">' + (row.author.length > 0 ? (' 作者：' + row.author + ' ') : '') + (row.translator.length > 0 ? (' 译者：' + row.translator + ' ') : '') + '</p></div></div>'
+function generateBookViewHtml(row, isShrinkSize) {
+	var imgUrlSuffix = ''
+	if (isShrinkSize) {
+		imgUrlSuffix = '?imageView2/2/w/80'
+	}
+	return '<div class="weui-cell"><div class = "weui-cell__hd" style = "position: relative;margin-right: 10px;" id="previewImage" ><img src = "' + CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + row.cover + imgUrlSuffix + '"  style = "width: 50px;display: block" /></div><div class = "weui-cell__bd"><p style = "color: #000000;">' + row.bookName + '</p><p style = "font-size: 13px;color: #888888;">' + (row.author.length > 0 ? (' 作者：' + row.author + ' ') : '') + (row.translator.length > 0 ? (' 译者：' + row.translator + ' ') : '') + '</p></div></div>'
 }
 
 function read(req, res) {
@@ -381,7 +385,7 @@ function read(req, res) {
 				var templateFile = 'read.htm'
 				if (rows.length > 0) {
 					var row = rows[0]
-					var bookHtml = bookViewHtml(row)
+					var bookHtml = generateBookViewHtml(row, false)
 					if (req.session.wechatBase.openid == row.openId) {
 						bookHtml = '<a href="editBook?id=' + row.bookId + '">' + bookHtml + '</a>'
 						button = authReadButton
@@ -393,7 +397,7 @@ function read(req, res) {
 						var d = new Date(row.noteId / 1000000)
 						var noteCell = '<div class="weui-media-box weui-media-box_text"><h4 class="weui-media-box__title">' + d.toLocaleDateString() + ' ' + d.toLocaleTimeString() + '</h4><p class="weui-media-box__desc">' + row.note + '</p></div><div class="weui-panel__ft" id="' + row.noteId + '"><a href="javascript:void(0);" class="weui-cell weui-cell_access weui-cell_link"><div class="weui-cell__bd">查看照片(' + row.pics.split(',').length + ')</div><span class="weui-cell__ft"></span></a></div>'
 							// if (req.session.wechatBase.openid == row.openId) {
-						noteCell = '<a href="editNote?id=' + row.noteId + '">' + noteCell + '</a>'
+						noteCell = '<a href="editNote?id=' + row.noteId + '&readid=' + row.readId + '">' + noteCell + '</a>'
 							// }
 						notesHtml += noteCell
 						notesPicScript += 'pics["' + row.noteId + '"]="' + row.pics + '";'
@@ -409,7 +413,7 @@ function read(req, res) {
 					poolConfig.query("SELECT *,IFNULL(bookName,'') AS bookName,cover,IFNULL(author,'') AS author,IFNULL(translator,'') AS translator ,tbl_reads.openId,bookId,ifnull(tbl_wechat_users.nickName,'') as nickName  FROM  `tbl_reads`, `tbl_books`,tbl_wechat_users  WHERE tbl_books.id = tbl_reads.bookId AND tbl_wechat_users.openId=tbl_reads.openid AND tbl_reads.id = ?  ", [req.query.id], function(err, rows, fields) {
 						if (rows.length > 0) {
 							var row = rows[0]
-							var bookHtml = bookViewHtml(row)
+							var bookHtml = generateBookViewHtml(row, true)
 							if (req.session.wechatBase.openid == row.openId) {
 								bookHtml = '<a href="editBook?id=' + row.bookId + '">' + bookHtml + '</a>'
 								button = authReadButton
@@ -667,7 +671,7 @@ function checkReadAuthorize(req, res, readId, tag, success, fail) {
 
 function getReadInfoWithIdAjax(req, res) {
 	var tag = 'getReadInfoWithIdAjax'
-	poolConfig.query("SELECT * FROM  `tbl_reads`,tbl_wechat_users WHERE tbl_reads.openId=tbl_wechat_users.openId  and tbl_reads.id = ?", [req.query.readId], function(err, rows, fields) {
+	poolConfig.query("SELECT * FROM  `tbl_reads`,tbl_wechat_users,tbl_books WHERE tbl_reads.openId=tbl_wechat_users.openId and tbl_books.id=tbl_reads.bookId  and tbl_reads.id = ?", [req.query.readId], function(err, rows, fields) {
 		if (err) {
 			logger.error(err);
 		} else {
@@ -689,7 +693,6 @@ function getReadInfoWithIdAjax(req, res) {
 	function fail() {
 		return res.send('{"status":"error"}')
 	}
-
 }
 
 function hideClearBookAddress(info) {
