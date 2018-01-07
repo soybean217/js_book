@@ -491,7 +491,7 @@ function editNote(req, res) {
 		imgUrl = CONFIG.QCLOUD_PARA.THUMBNAILS_DOMAIN + rows[0].cover + '?imageView2/1/w/80'
 		var bookHtml = ''
 		if (htmlFile == 'viewNote.htm') {
-			bookHtml = '<a href="read?id=' + rows[0].readId + '">' + bookViewHtml(rows[0]) + '<div class="weui-cell"><div class="weui-cell__bd"><span id="spanNote">查看 ' + rows[0].nickName + ' 更多本书笔记...</span></div></div></a>'
+			bookHtml = '<a href="read?id=' + rows[0].readId + '">' + generateBookViewHtml(rows[0], false) + '<div class="weui-cell"><div class="weui-cell__bd"><span id="spanNote">查看 ' + rows[0].nickName + ' 更多本书笔记...</span></div></div></a>'
 		}
 		var bottom = ''
 		if (req.session.userInfoFromDb && req.session.userInfoFromDb.subscribeTime == 0) {
@@ -1420,7 +1420,7 @@ function picUploadAjax(req, res) {
 				logger.error(err);
 			} else {
 				if (rows.constructor.name == 'OkPacket') {
-					var sendContent = '{"status":"ok","location":"editNote?id=' + id + '"}'
+					var sendContent = '{"status":"ok","location":"editNote?id=' + id + '&readid=' + req.query.readId + '"}'
 					addCapacityUsed()
 					res.send(sendContent);
 					res.end()
