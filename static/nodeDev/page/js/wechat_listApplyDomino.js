@@ -153,7 +153,6 @@ function confirmDomino(index) {
         title: '',
         text: '确认把书给"' + listApply.items[index].nickName + '"?选了就不能取消哦!',
         onOK: function() {
-          console.log('confirmDomino')
           chooseDominoApplysWithOpenId(listApply.items[index].openId, getUrlParam('readid'))
         },
       });
@@ -264,8 +263,10 @@ function procApplyListData(rev) {
         tmpItem.dominoStatusShow = '未选中'
         tmpItem.ftHtml = '<button class="weui-btn weui-weui-btn_disabled weui-btn_default">' + tmpItem.dominoStatusShow + '</button>'
       } else if (rev.baseInfo.openid == rev.readInfo.openId) {
-        tmpItem.dominoStatusShow = '选择'
-        tmpItem.ftHtml = '<button class="weui-btn weui-btn_primary">' + tmpItem.dominoStatusShow + '</button>'
+        if (rev.applyList[i].expressFeePayStatus && rev.applyList[i].expressFeePayStatus == 'payed') {
+          tmpItem.dominoStatusShow = '选择'
+          tmpItem.ftHtml = '<button class="weui-btn weui-btn_primary">' + tmpItem.dominoStatusShow + '</button>'
+        }
       }
       listApply.items.push(tmpItem)
     }

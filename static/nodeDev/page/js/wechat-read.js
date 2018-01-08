@@ -77,7 +77,7 @@ var openDominoState = new Vue({
 		readOwnerInfo: '',
 		seen: false,
 		applyButtonSeen: false,
-		applyButtonText: '申请接龙读这本书',
+		applyButtonText: '接龙本书',
 	},
 })
 var dominoApplyInfo = new Vue({
