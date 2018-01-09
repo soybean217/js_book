@@ -1,3 +1,4 @@
+$.showLoading();
 wx.ready(function() {
 
 	wxSdkSuccess();
@@ -233,6 +234,7 @@ function getApplyDominoInfoWithReadId(id) {
 					}, ]
 				});
 			}
+			$.hideLoading();
 		},
 		error: function(xhr, status) {
 			alert(JSON.stringify(status));

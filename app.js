@@ -843,16 +843,26 @@ function chooseDominoApplysWithOpenIdAjax(req, res) {
 				logger.error(err);
 				return fail()
 			} else {
+				var check = false
 				for (var i in rows) {
-					if (rows[i].expressFeePayStatus == 'payed' && rows[i].applyOpenId != req.query.openId) {
-						refund(rows[i], changeApplyPayStatus, function(info) {
-							logger.debug(info)
-						})
-					} else if (rows[i].applyOpenId == req.query.openId) {
-						if (rows[i].expressFeePayStatus == 'payed') {
-							transferExpressFee(rows[i])
+					if (rows[i].expressFeePayStatus == 'payed' && rows[i].applyOpenId == req.query.openId) {
+						check = true
+					}
+				}
+				if (check) {
+					for (var i in rows) {
+						if (rows[i].expressFeePayStatus == 'payed' && rows[i].applyOpenId != req.query.openId) {
+							refund(rows[i], changeApplyPayStatus, function(info) {
+								logger.debug(info)
+							})
+						} else if (rows[i].applyOpenId == req.query.openId) {
+							if (rows[i].expressFeePayStatus == 'payed') {
+								transferExpressFee(rows[i])
+							}
 						}
 					}
+				} else {
+					return fail()
 				}
 			}
 		});
@@ -1221,7 +1231,7 @@ function createUnifiedOrderAjax(req, res) {
 			out_trade_no: wxpayInfo.out_trade_no,
 			total_fee: wxpayInfo.total_fee,
 			spbill_create_ip: '127.0.0.1',
-			notify_url: 'http://' + CONFIG.DOMAIN + '/' + CONFIG.PAY_DIR_FIRST + '/notify',
+			notify_url: 'https://' + CONFIG.DOMAIN + '/' + CONFIG.PAY_DIR_FIRST + '/notify',
 			trade_type: 'JSAPI',
 			product_id: '1',
 			openid: req.session.wechatBase.openid,

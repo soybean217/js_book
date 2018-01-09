@@ -249,6 +249,7 @@ function getReadInfoWithId(id) {
 				} else {
 					vueRadioDomino.radioSeen = true
 				}
+				$.hideLoading();
 			}
 		},
 		error: function(xhr, status) {
@@ -293,7 +294,6 @@ function getDominoApplysWithReadId(readId) {
 					dominoApplyInfo.dominoApplyCount = rev.applyList.length
 					dominoApplyInfo.seen = true
 				}
-				$.hideLoading();
 			}
 		},
 		error: function(xhr, status) {
