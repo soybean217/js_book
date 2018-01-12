@@ -280,12 +280,12 @@ function getDominoApplysWithReadId(readId) {
 			} else {
 				if (rev.applyList && rev.applyList.length > 0) {
 					if (rev.readInfo.dominoOpenId && rev.readInfo.dominoOpenId.length > 4) {
-						dominoApplyInfo.dominoChosenImg = rev.applyList[0].headImgUrl.substr(0, rev.applyList[0].headImgUrl.length - 2) + '/96'
+						dominoApplyInfo.dominoChosenImg = rev.applyList[0].headImgUrl.substr(0, rev.applyList[0].headImgUrl.lastIndexOf('/')) + '/' + CONFIG.HEAD_ICON_REAL_RESOLUTION
 						dominoApplyInfo.dominoChosenName = rev.applyList[0].nickName
 					} else {
 						var tmp = ''
 						for (i in rev.applyList) {
-							var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[i].headImgUrl.length - 2) + '/96'
+							var rowImgUrl = rev.applyList[i].headImgUrl.substr(0, rev.applyList[0].headImgUrl.lastIndexOf('/'))  + '/' + CONFIG.HEAD_ICON_REAL_RESOLUTION
 							tmp += '<img height="50px" width="50px" src="' + rowImgUrl + '">'
 						}
 						dominoApplyInfo.innerIngHtml = tmp

@@ -1,4 +1,5 @@
 $.showLoading();
+var gApplyDominoInfoWithReadId
 wx.ready(function() {
 
 	wxSdkSuccess();
@@ -39,10 +40,10 @@ wx.ready(function() {
 
 });
 
-function showPayExpressFee() {
+function showPayExpressFee(bookAddress) {
 	$.prompt({
-		title: '请输入运费',
-		text: '运费请自行根据距离花费自己修改',
+		title: '修改运费',
+		text: dominoInfo.bookAddressInfo,
 		input: dominoInfo.expressDefaultFee,
 		empty: false, // 是否允许为空
 		onOK: function(input) {
@@ -165,6 +166,7 @@ function procDominoingDisplay(info) {
 		dominoInfo.seenExpress = true
 		dominoInfo.dominoMethod = "快递"
 		expressAddress = JSON.parse(info[0].expressAddress)
+		bookAddress = JSON.parse(info[0].bookAddress)
 		dominoInfo.expressAddress = '我的收件地址:' + '<br>姓名:' + expressAddress.userName + '<br>' + '邮编:' + expressAddress.postalCode + '<br>' + expressAddress.provinceName + ' ' + expressAddress.cityName + ' ' + expressAddress.countryName + ' ' + expressAddress.detailInfo + '<br>电话:' + expressAddress.telNumber
 		if (info[0].expressFeePayStatus == 'payed') {
 			dominoInfo.seenPayProcess = false
@@ -180,8 +182,8 @@ function procDominoingDisplay(info) {
 			}
 			if (info[0].expressFeePayStatus != 'refund' && info[0].dominoStatus == "waitChoose") {
 				$.modal({
-					title: "",
-					text: "是否马上支付运费",
+					title: "支付运费",
+					text: "",
 					buttons: [{
 						text: "取消",
 						className: "default",
@@ -189,7 +191,7 @@ function procDominoingDisplay(info) {
 					}, {
 						text: "支付",
 						onClick: function() {
-							showPayExpressFee()
+							showPayExpressFee(bookAddress)
 						},
 					}, ]
 				});
@@ -208,6 +210,7 @@ function getApplyDominoInfoWithReadId(id) {
 		success: function(result) {
 			rev = JSON.parse(result);
 			console.log('getApplyDominoInfoWithReadId', rev)
+			gApplyDominoInfoWithReadId = rev
 			info = rev.applyList
 				// $('#loadingToast').css("display", "none")
 			if (rev.applyList && rev.applyList.length > 0) {
@@ -224,8 +227,8 @@ function getApplyDominoInfoWithReadId(id) {
 
 			} else {
 				$.modal({
-					title: "快递接龙实体书",
-					text: "选择或输入您的快递地址",
+					title: "选择或输入快递地址",
+					text: "然后根据书所在地，自行修改和支付运费，若分享者选你，运费将转给它，没被选中会自动退款。",
 					buttons: [{
 						text: "确认",
 						onClick: function() {
