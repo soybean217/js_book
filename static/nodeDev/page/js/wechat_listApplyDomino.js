@@ -167,10 +167,10 @@ function showChosenApplyAddress(openId, readId) {
     contentType: "application/json",
     success: function(result) {
       rev = JSON.parse(result);
-      addressContent = '姓名:' + rev.userName + '\n' + '邮编:' + rev.postalCode + '\n' + rev.provinceName + ' ' + rev.cityName + ' ' + rev.countryName + ' ' + rev.detailInfo + '\n电话:' + rev.telNumber
+      addressContent = '姓名:' + rev.userName + ',\n' + '邮编:' + rev.postalCode + ',\n' + rev.provinceName + ' ' + rev.cityName + ' ' + rev.countryName + ' ' + rev.detailInfo + ',\n电话:' + rev.telNumber
       listApply.chosenTarget = true
       listApply.targetAddress = addressContent
-        // $('#taTargetAddress').val(addressContent)
+      // $('#taTargetAddress').val(addressContent)
     },
     error: function(xhr, status) {
       alert(JSON.stringify(status));
